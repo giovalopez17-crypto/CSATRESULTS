@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ NPS/CSAT | Dashboard Satisfacción</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS (xlsx.full.min.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FileSaver.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 20 20"><path stroke="%2364748b" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 8l4 4 4-4"/></svg>');
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            padding-right: 2.5rem;
+        }
+
+        /* Elements shown after loading */
+        #main-dashboard {
+            display: none;
+        }
+
+        .tab-button {
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-header:hover {
+            background-color: #f1f5f9;
+        }
+        
+        /* Efecto visual para cross-filtering */
+        .cross-filter-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .cross-filter-row:hover {
+            background-color: #eff6ff !important;
+            transform: scale(1.01);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Drawer Custom Scrollbar */
+        #coach-drawer::-webkit-scrollbar { width: 8px; }
+        #coach-drawer::-webkit-scrollbar-track { background: #f1f5f9; }
+        #coach-drawer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        #coach-drawer::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 lg:p-10 relative">
+    <div class="max-w-[1400px] mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">⭐ NPS/CSAT | Dashboard Satisfacción</h1>
+            <p class="text-slate-500 mt-2 text-lg">Analítica avanzada de experiencia del cliente</p>
+        </header>
+
+        <!-- Zona de Carga (Modificada para 2 archivos) -->
+        <div id="upload-section" class="max-w-4xl mx-auto space-y-8">
+            <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
+                <h2 class="font-bold text-blue-800 text-lg mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Instrucciones de Carga
+                </h2>
+                <p class="text-sm text-blue-600">Sube el reporte del <strong>mes actual</strong> para habilitar el dashboard. Opcionalmente, sube el reporte del <strong>mes anterior</strong> (con la misma estructura) para ver las tendencias (Deltas) automáticas en tus KPIs.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Zona Archivo Actual -->
+                <div id="drop-current" onclick="document.getElementById('file-current').click()" class="rounded-2xl p-8 text-center cursor-pointer shadow-sm border-2 border-dashed border-blue-400 bg-white hover:bg-blue-50 transition-all group">
+                    <input type="file" id="file-current" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleFile(event, 'current')">
+                    <div class="bg-blue-100 p-3 rounded-full w-14 h-14 mx-auto mb-4 text-blue-600 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <p class="font-black text-slate-800 uppercase tracking-wider text-sm">1. Mes Actual (Requerido)</p>
+                    <p id="label-current" class="text-sm text-slate-400 mt-2 italic">Haz clic para buscar</p>
+                </div>
+
+                <!-- Zona Archivo Histórico -->
+                <div id="drop-hist" onclick="document.getElementById('file-hist').click()" class="rounded-2xl p-8 text-center cursor-pointer shadow-sm border-2 border-dashed border-slate-300 bg-white hover:bg-slate-50 transition-all group">
+                    <input type="file" id="file-hist" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleFile(event, 'hist')">
+                    <div class="bg-slate-100 p-3 rounded-full w-14 h-14 mx-auto mb-4 text-slate-500 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <p class="font-black text-slate-800 uppercase tracking-wider text-sm">2. Mes Anterior (Opcional)</p>
+                    <p id="label-hist" class="text-sm text-slate-400 mt-2 italic">Haz clic para buscar</p>
+                </div>
+            </div>
+
+            <div class="text-center pt-4">
+                <button id="btn-start" onclick="initDashboard()" class="px-10 py-4 bg-blue-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 opacity-50 cursor-not-allowed transform transition-transform" disabled>Generar Dashboard</button>
+                <div id="loading-msg" class="hidden mt-4 text-blue-600 font-bold animate-pulse">Procesando estructura de datos...</div>
+                <div id="error-msg" class="hidden mt-4 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm"></div>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <div id="main-dashboard">
+            <!-- Filtros -->
+            <div class="mb-8 p-6 bg-white rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                    <h2 class="text-xl font-bold text-slate-800">Filtros Activos</h2>
+                    <div class="flex items-center gap-3">
+                        <button onclick="resetFilters()" class="text-slate-400 hover:text-red-500 font-bold transition-colors text-xs tracking-widest uppercase px-3 py-2 rounded hover:bg-red-50">Limpiar Todo</button>
+                        <button onclick="downloadFilteredData()" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow flex items-center gap-2 text-sm transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Descargar Datos
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">PAÍS</label><select id="pais-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">SUCURSAL</label><select id="sucursal-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">COORDINADOR</label><select id="coordinador-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">COACH</label><select id="coach-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">HORARIO</label><select id="horario-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">NIVEL</label><select id="nivel-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"></select></div>
+                    <div class="space-y-1.5 bg-yellow-50/50 p-2 rounded -m-2 lg:col-span-2 border border-transparent hover:border-yellow-200 transition-colors"><label class="text-[10px] font-black text-yellow-600 uppercase tracking-widest">COLUMNA COMENTARIOS PRINCIPAL</label><select id="comments-column-filter" class="w-full bg-white border border-yellow-200 rounded-lg p-2 text-sm font-semibold focus:ring-2 focus:ring-yellow-500 outline-none"></select></div>
+                </div>
+            </div>
+
+            <!-- ENRICHED KPI CARDS (Reemplaza a los Gauges) -->
+            <div class="mb-10 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                
+                <!-- KPI: Encuestas -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
+                            Volumen Total <span id="delta-encuestas" class="hidden text-xs rounded px-1.5 py-0.5"></span>
+                        </h4>
+                        <p id="kpi-encuestas" class="text-4xl font-black text-slate-800">0</p>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 font-medium">Encuestas respondidas según filtros actuales.</p>
+                </div>
+
+                <!-- KPI: NPS -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between group">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
+                            NPS Global <span id="delta-nps" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                        </h4>
+                        <p id="kpi-nps" class="text-4xl font-black text-slate-800">0%</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>0</span><span>100</span></div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="bar-nps" class="h-full rounded-full transition-all duration-1000 w-0 bg-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: CSAT Académico -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
+                            CSAT Académico <span id="delta-csat" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                        </h4>
+                        <p id="kpi-csat" class="text-4xl font-black text-slate-800">0%</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>0</span><span>100</span></div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="bar-csat" class="h-full rounded-full transition-all duration-1000 w-0 bg-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: CSAT Servicio -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
+                            CSAT Servicio <span id="delta-servicio" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                        </h4>
+                        <p id="kpi-servicio" class="text-4xl font-black text-slate-800">0%</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>0</span><span>100</span></div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="bar-servicio" class="h-full rounded-full transition-all duration-1000 w-0 bg-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: Expectativas -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
+                            Superó Expect. <span id="delta-expect" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                        </h4>
+                        <p id="kpi-expect" class="text-4xl font-black text-slate-800">0%</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>0</span><span>100</span></div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="bar-expect" class="h-full rounded-full transition-all duration-1000 w-0 bg-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pestañas de Análisis -->
+            <div id="tabs-section" class="mb-10">
+                <div class="border-b border-slate-200">
+                    <nav class="flex space-x-12 overflow-x-auto">
+                        <button id="tab-coach" class="tab-button active py-4 px-1 text-sm font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap hover:text-slate-800">Ranking Coaches</button>
+                        <button id="tab-nivel" class="tab-button py-4 px-1 text-sm font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap hover:text-slate-800">Por Nivel</button>
+                        <button id="tab-horario" class="tab-button py-4 px-1 text-sm font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap hover:text-slate-800">Por Horario</button>
+                        <button id="tab-alertas" class="tab-button py-4 px-1 text-sm font-bold text-red-500 uppercase tracking-widest whitespace-nowrap hover:text-red-700">Centro de Alertas</button>
+                    </nav>
+                </div>
+
+                <div id="content-coach" class="tab-content active mt-6">
+                    <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50"><tr id="coach-analysis-header"></tr></thead>
+                            <tbody id="coach-analysis-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="content-nivel" class="tab-content mt-6">
+                    <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                        <div class="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo (Cross-filtering): Haz clic en cualquier fila para filtrar automáticamente todo el dashboard por ese Nivel.</span>
+                        </div>
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50"><tr id="nivel-analysis-header"></tr></thead>
+                            <tbody id="nivel-analysis-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="content-horario" class="tab-content mt-6">
+                    <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                         <div class="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo (Cross-filtering): Haz clic en cualquier fila para filtrar automáticamente todo el dashboard por ese Horario.</span>
+                        </div>
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50"><tr id="horario-analysis-header"></tr></thead>
+                            <tbody id="horario-analysis-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="content-alertas" class="tab-content mt-6">
+                    <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                        <div class="p-6 bg-red-50 border-b border-red-100">
+                            <h3 class="text-lg font-bold text-red-800">Centro de Detección de Alertas y Áreas de Mejora</h3>
+                            <p class="text-red-600 text-sm">Este reporte agrupa las notas bajas, detractores y expectativas no cumplidas por Coach, Horario y Nivel. Haz clic en una fila para explorar los comentarios específicos de esa sesión.</p>
+                        </div>
+                        
+                        <!-- Inner Tabs for Alertas -->
+                        <div class="border-b border-slate-200 bg-white px-6 flex gap-8">
+                            <button id="alert-tab-csat" class="py-4 text-sm font-bold text-red-600 border-b-4 border-red-600 uppercase tracking-wider transition-colors">Alertas CSAT (1-8)</button>
+                            <button id="alert-tab-nps" class="py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Alertas NPS (< 80%)</button>
+                            <button id="alert-tab-expect" class="py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Alertas Expectativas</button>
+                        </div>
+
+                        <!-- Tabla Alertas CSAT -->
+                        <div id="alert-csat-section" class="block overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Coach</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Horario</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nivel</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Encuestas</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Alertas CSAT (1-8)</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Incidencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertas-csat-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Tabla Alertas NPS -->
+                        <div id="alert-nps-section" class="hidden overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Coach</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Horario</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nivel</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Encuestas</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Encuestas (1 al 6)</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">NPS Actual</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertas-nps-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Tabla Alertas Expectativas -->
+                        <div id="alert-expect-section" class="hidden overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Coach</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Horario</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nivel</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Encuestas</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Expectativa Baja</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Incidencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertas-expect-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER: COACH DETAIL VIEW (Slide-over) -->
+    <div id="drawer-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden transition-opacity" onclick="closeCoachDetails()"></div>
+    <div id="coach-drawer" class="fixed top-0 right-0 h-full w-full md:w-[85vw] lg:w-[75vw] xl:w-[1100px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto flex flex-col">
+        
+        <!-- Header Drawer -->
+        <div class="sticky top-0 z-10 bg-slate-900 px-8 py-6 text-white shadow-md flex justify-between items-center">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-500/20 p-2 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <h2 class="text-3xl font-extrabold tracking-tight" id="detail-coach-name">Nombre del Coach</h2>
+                </div>
+                <p class="text-slate-400 mt-2 ml-11">Informe Detallado de Rendimiento Operativo y Comentarios</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="btn-download-pdf" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Generar Ficha PDF (1 a 1)
+                </button>
+                <button onclick="closeCoachDetails()" class="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-8 flex-1 bg-slate-50/50">
+            <!-- Inner Tabs for Coach Detail -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+                <div class="border-b border-slate-200 bg-slate-50/80 px-6 flex gap-8 overflow-x-auto">
+                    <button id="inner-tab-csat" class="whitespace-nowrap py-4 text-sm font-bold text-blue-600 border-b-4 border-blue-600 uppercase tracking-wider transition-colors">Módulo CSAT</button>
+                    <button id="inner-tab-nps" class="whitespace-nowrap py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Módulo NPS</button>
+                    <button id="inner-tab-expect" class="whitespace-nowrap py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Módulo Expectativas</button>
+                </div>
+
+                <!-- CSAT SECTION -->
+                <div id="detail-csat-section" class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">CSAT por Nivel</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT</th></tr>
+                                </thead>
+                                <tbody id="detail-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-emerald-500 pl-3 uppercase tracking-widest">CSAT por Horario</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT</th></tr>
+                                </thead>
+                                <tbody id="detail-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPS SECTION -->
+                <div id="detail-nps-section" class="p-6 grid-cols-1 lg:grid-cols-2 gap-8 hidden">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-orange-500 pl-3 uppercase tracking-widest">NPS por Nivel</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">NPS</th></tr>
+                                </thead>
+                                <tbody id="detail-nps-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-purple-500 pl-3 uppercase tracking-widest">NPS por Horario</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">NPS</th></tr>
+                                </thead>
+                                <tbody id="detail-nps-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPECTATIVAS SECTION -->
+                <div id="detail-expect-section" class="p-6 grid-cols-1 lg:grid-cols-2 gap-8 hidden">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-pink-500 pl-3 uppercase tracking-widest">Expectativas por Nivel</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">% Positivo</th></tr>
+                                </thead>
+                                <tbody id="detail-expect-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-rose-500 pl-3 uppercase tracking-widest">Expectativas por Horario</h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                            <table class="min-w-full text-sm bg-white">
+                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">% Positivo</th></tr>
+                                </thead>
+                                <tbody id="detail-expect-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ALERT DETAILS MODAL (z-index adjusted) -->
+    <div id="alert-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[60] transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col m-4 transform transition-all scale-95 opacity-0" id="alert-modal-content-wrapper">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-white rounded-t-2xl">
+                <div>
+                    <h3 class="text-xl font-extrabold text-red-800 flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        Detalle de Alerta de Calidad
+                    </h3>
+                    <p class="text-red-600 text-sm mt-1 font-medium" id="alert-modal-subtitle">Coach: [Nombre] | Horario: [Horario] | Nivel: [Nivel]</p>
+                </div>
+                <button onclick="closeAlertModal()" class="text-slate-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-50" id="alert-modal-body"></div>
+            <div class="p-4 border-t border-slate-100 bg-white rounded-b-2xl flex justify-end">
+                <button onclick="closeAlertModal()" class="px-6 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors text-sm uppercase tracking-wide">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVISIBLE PDF TEMPLATE FOR COACH ONE-PAGER -->
+    <div id="pdf-container-wrapper" class="absolute top-[-9999px] left-[-9999px] overflow-hidden">
+        <div id="pdf-report" class="bg-white w-[794px] min-h-[1123px] p-10 font-sans text-slate-800">
+            <div class="border-b-4 border-indigo-600 pb-4 mb-8 flex justify-between items-end">
+                <div>
+                    <h1 class="text-4xl font-black text-slate-900 mb-1" id="pdf-coach-name">Nombre Coach</h1>
+                    <p class="text-lg text-slate-500 font-medium">Ficha de Retroalimentación y Rendimiento 1 a 1</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Encuestas</p>
+                    <p class="text-3xl font-black text-indigo-600" id="pdf-total-surveys">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-10">
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-2">NPS Global</h3>
+                    <p class="text-5xl font-black text-slate-800" id="pdf-nps">0%</p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-2">CSAT Académico</h3>
+                    <p class="text-5xl font-black text-slate-800" id="pdf-csat">0%</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-black text-green-700 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
+                    Top Comentarios Positivos (Fortalezas)
+                </h3>
+                <div id="pdf-positive-comments" class="space-y-3"></div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-black text-red-700 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"/></svg>
+                    Áreas de Oportunidad (Notas Bajas)
+                </h3>
+                <div id="pdf-negative-comments" class="space-y-3"></div>
+            </div>
+            
+            <div class="mt-12 border-t-2 border-slate-100 pt-6">
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Plan de Acción / Compromisos:</h3>
+                <div class="w-full h-32 border-2 border-dashed border-slate-300 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRawData = [];
+        let historicalRawData = [];
+        let filteredData = [];
+        let filteredHistoricalData = [];
+        let columnHeaders = [], columnIndices = {};
+        let analysisSort = { column: 'total', direction: 'desc' };
+        let currentCoachData = [];
+
+        const columnMappings = {
+            'pais-filter': 'pais sucursal',
+            'sucursal-filter': 'sucursal',
+            'coordinador-filter': 'coordinador',
+            'coach-filter': 'coach aplica',
+            'horario-filter': 'horario',
+            'nivel-filter': 'nivel',
+            'comments-column-filter': null
+        };
+
+        const requiredMetricColumns = {
+            'nps_score': 'nps score',
+            'csat_coach_score': 'csat coach score',
+            'expectativas': 'de acuerdo con las expectativas que tenias sobre este curso como dirias que fue tu experiencia este mes',
+            'nivel': 'nivel',
+            'csat_bist_score': 'csat bist score',
+            'csat_instalaciones_score': 'csat instalaciones score',
+            'nps_comment': 'nps comment',
+            'expectativas_comment': 'que podemos hacer para superar tus expectativas'
+        };
+
+        function normalizeString(str) {
+            if (typeof str !== 'string') return '';
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+        }
+
+        // --- NEW: Handle 2 Files ---
+        function handleFile(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const labelId = `label-${type}`;
+            const dropId = `drop-${type}`;
+            
+            document.getElementById(labelId).textContent = file.name;
+            document.getElementById(dropId).classList.replace('border-dashed', 'border-solid');
+            if(type === 'current') document.getElementById(dropId).classList.replace('border-blue-400', 'border-blue-600');
+            else document.getElementById(dropId).classList.replace('border-slate-300', 'border-slate-500');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                    if (jsonData.length < 2) throw new Error("Archivo inválido.");
+                    
+                    const normHeaders = jsonData[0].map(normalizeString);
+                    const headers = jsonData[0];
+                    
+                    const parsedRows = jsonData.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((h, i) => obj[h] = row[i]);
+                        return obj;
+                    });
+
+                    if (type === 'current') {
+                        columnIndices = {};
+                        Object.entries(columnMappings).forEach(([id, norm]) => {
+                            if (norm) {
+                                const idx = normHeaders.indexOf(norm);
+                                if (idx !== -1) columnIndices[norm] = idx;
+                            }
+                        });
+                        Object.values(requiredMetricColumns).forEach(name => {
+                            const idx = normHeaders.indexOf(name);
+                            if (idx !== -1) columnIndices[name] = idx;
+                        });
+                        columnHeaders = headers;
+                        currentRawData = parsedRows;
+                        
+                        // Enable start button
+                        const btn = document.getElementById('btn-start');
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btn.classList.add('hover:bg-blue-700', 'hover:-translate-y-1');
+                    } else {
+                        historicalRawData = parsedRows; // Just store it for delta calculations
+                    }
+                } catch (err) { alert("Error leyendo archivo: " + err.message); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function initDashboard() {
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('main-dashboard').style.display = 'block';
+            populateFilters();
+            applyFilters();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('pdf-button') || document.getElementById('btn-download-pdf').addEventListener('click', generateCoachPDF);
+            
+            // Main dashboard tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active', 'text-slate-800', 'border-blue-500'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active', 'text-slate-800', 'border-blue-500');
+                    document.getElementById('content-' + btn.id.split('-')[1]).classList.add('active');
+                });
+            });
+
+            // Inner Tabs for Coach Drawer
+            const innerTabs = [
+                { btn: document.getElementById('inner-tab-csat'), sec: document.getElementById('detail-csat-section') },
+                { btn: document.getElementById('inner-tab-nps'), sec: document.getElementById('detail-nps-section') },
+                { btn: document.getElementById('inner-tab-expect'), sec: document.getElementById('detail-expect-section') }
+            ];
+
+            innerTabs.forEach(tab => {
+                if(!tab.btn) return;
+                tab.btn.addEventListener('click', () => {
+                    innerTabs.forEach(other => {
+                        other.btn.classList.remove('text-blue-600', 'border-blue-600');
+                        other.btn.classList.add('text-slate-500', 'border-transparent');
+                        other.sec.classList.add('hidden');
+                        other.sec.classList.remove('grid');
+                    });
+                    tab.btn.classList.add('text-blue-600', 'border-blue-600');
+                    tab.btn.classList.remove('text-slate-500', 'border-transparent');
+                    tab.sec.classList.remove('hidden');
+                    tab.sec.classList.add('grid');
+                });
+            });
+
+            // Inner Tabs for Alertas
+            const alertTabs = [
+                { btn: document.getElementById('alert-tab-csat'), sec: document.getElementById('alert-csat-section') },
+                { btn: document.getElementById('alert-tab-nps'), sec: document.getElementById('alert-nps-section') },
+                { btn: document.getElementById('alert-tab-expect'), sec: document.getElementById('alert-expect-section') }
+            ];
+
+            alertTabs.forEach(tab => {
+                if(!tab.btn) return;
+                tab.btn.addEventListener('click', () => {
+                    alertTabs.forEach(other => {
+                        other.btn.classList.remove('text-red-600', 'border-red-600');
+                        other.btn.classList.add('text-slate-500', 'border-transparent');
+                        other.sec.classList.add('hidden');
+                        other.sec.classList.remove('block');
+                    });
+                    tab.btn.classList.add('text-red-600', 'border-red-600');
+                    tab.btn.classList.remove('text-slate-500', 'border-transparent');
+                    tab.sec.classList.remove('hidden');
+                    tab.sec.classList.add('block');
+                });
+            });
+
+            // Filters Listeners
+            Object.keys(columnMappings).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', () => {
+                        if (id === 'pais-filter') updateSucursalOptions();
+                        if (id !== 'comments-column-filter') applyFilters();
+                    });
+                }
+            });
+        });
+
+        function populateFilters() {
+            Object.entries(columnMappings).forEach(([id, norm]) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+
+                if (id === 'comments-column-filter') {
+                    sel.innerHTML = '<option value="">-- Seleccionar Columna de Comentarios --</option>';
+                    columnHeaders.forEach(h => {
+                        const opt = document.createElement('option');
+                        opt.value = h; opt.textContent = h;
+                        sel.appendChild(opt);
+                    });
+                    let likely = columnHeaders.find(h => normalizeString(h) === 'coach comment');
+                    if (!likely) likely = columnHeaders.find(h => normalizeString(h).includes('comentario') || normalizeString(h).includes('feedback'));
+                    if (likely) sel.value = likely;
+                    return;
+                }
+
+                if (id === 'sucursal-filter') {
+                    updateSucursalOptions();
+                    return;
+                }
+
+                const colIdx = columnIndices[norm];
+                if (colIdx === undefined) return;
+                const col = columnHeaders[colIdx];
+                const vals = [...new Set(currentRawData.map(r => r[col]))].filter(v => v).sort();
+                sel.innerHTML = '<option value="">All</option>';
+                vals.forEach(v => { const opt = document.createElement('option'); opt.value = v; opt.textContent = v; sel.appendChild(opt); });
+            });
+        }
+
+        function updateSucursalOptions() {
+            const paisSel = document.getElementById('pais-filter');
+            const sucSel = document.getElementById('sucursal-filter');
+            if (!paisSel || !sucSel) return;
+
+            const paisIdx = columnIndices[columnMappings['pais-filter']];
+            const sucIdx = columnIndices[columnMappings['sucursal-filter']];
+            if (sucIdx === undefined) return;
+            
+            const sucCol = columnHeaders[sucIdx];
+            let relevantData = currentRawData;
+            
+            if (paisSel.value && paisIdx !== undefined) {
+                const paisCol = columnHeaders[paisIdx];
+                relevantData = currentRawData.filter(r => r[paisCol] === paisSel.value);
+            }
+
+            const vals = [...new Set(relevantData.map(r => r[sucCol]))].filter(v => v).sort();
+            const currentVal = sucSel.value;
+            sucSel.innerHTML = '<option value="">All</option>';
+            let exists = false;
+
+            vals.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v; opt.textContent = v;
+                if (v === currentVal) { opt.selected = true; exists = true; }
+                sucSel.appendChild(opt);
+            });
+
+            if (currentVal && !exists) sucSel.value = "";
+        }
+
+        function getActiveFiltersMap() {
+            const active = {};
+            Object.entries(columnMappings).forEach(([id, norm]) => {
+                if (id === 'comments-column-filter') return;
+                const el = document.getElementById(id);
+                if (!el || !el.value) return;
+                const colIdx = columnIndices[norm];
+                if (colIdx !== undefined) active[columnHeaders[colIdx]] = el.value;
+            });
+            return active;
+        }
+
+        function applyFilters() {
+            const activeFilters = getActiveFiltersMap();
+            filteredData = currentRawData.filter(r => Object.entries(activeFilters).every(([c, v]) => r[c] == v));
+            
+            filteredHistoricalData = [];
+            if(historicalRawData.length > 0) {
+                filteredHistoricalData = historicalRawData.filter(r => Object.entries(activeFilters).every(([c, v]) => r[c] == v));
+            }
+
+            updateMetrics(filteredData, filteredHistoricalData);
+            updateAnalysisTables();
+        }
+
+        function resetFilters() {
+            Object.keys(columnMappings).forEach(id => {
+                const element = document.getElementById(id);
+                if (element && id !== 'comments-column-filter') element.value = "";
+            });
+            updateSucursalOptions();
+            applyFilters();
+        }
+
+        // --- NEW KPI CALCULATION AND RENDERING ---
+        function calculateKPISet(dataset) {
+            let res = { total: dataset.length, nps: 0, csatCoach: 0, csatEsac: 0, csatInst: 0, expect: 0 };
+            if (!res.total) return res;
+
+            const idx = {
+                nps: columnIndices[requiredMetricColumns.nps_score],
+                c_coach: columnIndices[requiredMetricColumns.csat_coach_score],
+                c_esac: columnIndices[requiredMetricColumns.csat_bist_score],
+                c_inst: columnIndices[requiredMetricColumns.csat_instalaciones_score],
+                exp: columnIndices[requiredMetricColumns.expectativas]
+            };
+
+            let n_p=0, n_d=0, n_t=0;
+            let cc_c=0, cc_t=0;
+            let ce_c=0, ce_t=0;
+            let ci_c=0, ci_t=0;
+            let ex_c=0, ex_t=0;
+
+            dataset.forEach(r => {
+                // NPS
+                if(idx.nps !== undefined) {
+                    const v = parseFloat(r[columnHeaders[idx.nps]]);
+                    if(!isNaN(v)) { n_t++; if(v>=9) n_p++; else if(v<=6) n_d++; }
+                }
+                // CSAT Coach
+                if(idx.c_coach !== undefined) {
+                    const v = parseFloat(r[columnHeaders[idx.c_coach]]);
+                    if(!isNaN(v)) { cc_t++; if(v>=1 && v<=8) cc_c++; }
+                }
+                // CSAT Esac
+                if(idx.c_esac !== undefined) {
+                    const v = parseFloat(r[columnHeaders[idx.c_esac]]);
+                    if(!isNaN(v)) { ce_t++; if(v>=1 && v<=8) ce_c++; }
+                }
+                // CSAT Inst
+                if(idx.c_inst !== undefined) {
+                    const v = parseFloat(r[columnHeaders[idx.c_inst]]);
+                    if(!isNaN(v)) { ci_t++; if(v>=1 && v<=8) ci_c++; }
+                }
+                // Expect
+                if(idx.exp !== undefined) {
+                    const v = r[columnHeaders[idx.exp]];
+                    if(v) { 
+                        ex_t++; 
+                        const n = normalizeString(v);
+                        if(n.includes('muy por encima') || n.includes('supero')) ex_c++; 
+                    }
+                }
+            });
+
+            res.nps = n_t ? ((n_p - n_d) / n_t) * 100 : 0;
+            res.csatCoach = cc_t ? (cc_c / cc_t) * 100 : 0;
+            res.csatEsac = ce_t ? (ce_c / ce_t) * 100 : 0;
+            res.csatInst = ci_t ? (ci_c / ci_t) * 100 : 0;
+            res.expect = ex_t ? (ex_c / ex_t) * 100 : 0;
+            return res;
+        }
+
+        function renderKPICard(idPrefix, currentVal, histVal, isNps = false) {
+            const elVal = document.getElementById(`kpi-${idPrefix}`);
+            const elBar = document.getElementById(`bar-${idPrefix}`);
+            const elDelta = document.getElementById(`delta-${idPrefix}`);
+            
+            if(!elVal) return;
+
+            elVal.textContent = currentVal.toFixed(1) + (idPrefix === 'encuestas' ? '' : '%');
+            
+            // Bar logic (Skip for encuestas)
+            if (elBar) {
+                let barW = isNps ? (currentVal + 100) / 2 : currentVal; 
+                barW = Math.max(0, Math.min(100, barW)); // clamp
+                elBar.style.width = barW + '%';
+                
+                // Semantic colors
+                elBar.className = "h-full rounded-full transition-all duration-1000 w-0"; // reset
+                if (isNps) {
+                    if(currentVal >= 50) elBar.classList.add('bg-green-500');
+                    else if (currentVal >= 0) elBar.classList.add('bg-yellow-400');
+                    else elBar.classList.add('bg-red-500');
+                } else {
+                    if(currentVal >= 80) elBar.classList.add('bg-blue-600');
+                    else elBar.classList.add('bg-blue-400');
+                }
+                elBar.style.width = barW + '%'; // re-apply
+            }
+
+            // Delta logic
+            if (histVal !== null && elDelta) {
+                const diff = currentVal - histVal;
+                elDelta.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-slate-100', 'text-slate-500');
+                
+                if (diff > 0.1) {
+                    elDelta.textContent = `↑ +${diff.toFixed(1)}${idPrefix === 'encuestas'?'':'%'}`;
+                    elDelta.classList.add('bg-green-100', 'text-green-700');
+                } else if (diff < -0.1) {
+                    elDelta.textContent = `↓ ${diff.toFixed(1)}${idPrefix === 'encuestas'?'':'%'}`;
+                    elDelta.classList.add('bg-red-100', 'text-red-700');
+                } else {
+                    elDelta.textContent = `= 0.0%`;
+                    elDelta.classList.add('bg-slate-100', 'text-slate-500');
+                }
+            } else if (elDelta) {
+                elDelta.classList.add('hidden');
+            }
+        }
+
+        function updateMetrics(currData, histData) {
+            const currKpi = calculateKPISet(currData);
+            const histKpi = histData.length > 0 ? calculateKPISet(histData) : null;
+
+            renderKPICard('encuestas', currKpi.total, histKpi ? histKpi.total : null);
+            renderKPICard('nps', currKpi.nps, histKpi ? histKpi.nps : null, true);
+            renderKPICard('csat', currKpi.csatCoach, histKpi ? histKpi.csatCoach : null);
+            renderKPICard('servicio', currKpi.csatEsac, histKpi ? histKpi.csatEsac : null);
+            renderKPICard('expect', currKpi.expect, histKpi ? histKpi.expect : null);
+        }
+
+        function handleSort(col) {
+            if (analysisSort.column === col) analysisSort.direction = analysisSort.direction === 'asc' ? 'desc' : 'asc';
+            else { analysisSort.column = col; analysisSort.direction = 'desc'; }
+            updateAnalysisTables();
+        }
+
+        function renderHeaders(id, name) {
+            const header = document.getElementById(id);
+            const cols = [
+                { k: 'name', l: name }, { k: 'total', l: 'Encuestas' }, { k: 'nps', l: 'NPS' }, 
+                { k: 'csat', l: 'Académico' }, { k: 'expect', l: 'Expectativa' }
+            ];
+            header.innerHTML = "";
+            cols.forEach(c => {
+                const th = document.createElement('th');
+                th.className = "px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest sort-header";
+                th.onclick = () => handleSort(c.k);
+                let arrow = analysisSort.column === c.k ? (analysisSort.direction === 'asc' ? " ↑" : " ↓") : "";
+                if (arrow) th.classList.add('text-blue-600', 'bg-blue-50');
+                th.textContent = c.l + arrow;
+                header.appendChild(th);
+            });
+        }
+
+        // --- CROSS FILTERING IN TABLES ---
+        function updateAnalysisTables() {
+            if (!filteredData.length) {
+                ['coach-analysis-body','nivel-analysis-body','horario-analysis-body','alertas-csat-body','alertas-nps-body','alertas-expect-body'].forEach(id => {
+                    const el = document.getElementById(id); if(el) el.innerHTML = '';
+                });
+                return;
+            }
+            const cIdx = columnIndices[columnMappings['coach-filter']];
+            const nIdx = columnIndices[requiredMetricColumns.nivel];
+            const hIdx = columnIndices[columnMappings['horario-filter']];
+            const npsIdx = columnIndices[requiredMetricColumns.nps_score];
+            const csatIdx = columnIndices[requiredMetricColumns.csat_coach_score];
+            const expIdx = columnIndices[requiredMetricColumns.expectativas];
+
+            const gen = (idx) => {
+                if (idx === undefined) return [];
+                const colKey = columnHeaders[idx];
+                const grps = {};
+                
+                // Datos del mes actual
+                filteredData.forEach(r => {
+                    const g = r[colKey]; if (!g) return;
+                    if (!grps[g]) grps[g] = { t: 0, np: 0, nd: 0, nt: 0, cs: 0, ct: 0, es: 0, et: 0, h_t: 0, h_np: 0, h_nd: 0, h_nt: 0, h_cs: 0, h_ct: 0, h_es: 0, h_et: 0 };
+                    const s = grps[g]; s.t++;
+                    const ns = parseFloat(r[columnHeaders[npsIdx]]); if (!isNaN(ns)) { s.nt++; if (ns >= 9) s.np++; else if (ns <= 6) s.nd++; }
+                    const cs = parseFloat(r[columnHeaders[csatIdx]]); if (!isNaN(cs)) { s.ct++; if (cs >= 1 && cs <= 8) s.cs++; }
+                    const ev = r[columnHeaders[expIdx]]; if (ev) { s.et++; if (normalizeString(ev).includes('muy por encima') || normalizeString(ev).includes('supero')) s.es++; }
+                });
+
+                // Datos históricos para calcular deltas
+                if (filteredHistoricalData.length > 0) {
+                    filteredHistoricalData.forEach(r => {
+                        const g = r[colKey]; if (!g) return;
+                        if (!grps[g]) return; // Solo calculamos delta para los que existen en el mes actual
+                        const s = grps[g]; s.h_t++;
+                        const ns = parseFloat(r[columnHeaders[npsIdx]]); if (!isNaN(ns)) { s.h_nt++; if (ns >= 9) s.h_np++; else if (ns <= 6) s.h_nd++; }
+                        const cs = parseFloat(r[columnHeaders[csatIdx]]); if (!isNaN(cs)) { s.h_ct++; if (cs >= 1 && cs <= 8) s.h_cs++; }
+                        const ev = r[columnHeaders[expIdx]]; if (ev) { s.h_et++; if (normalizeString(ev).includes('muy por encima') || normalizeString(ev).includes('supero')) s.h_es++; }
+                    });
+                }
+
+                return Object.entries(grps).map(([n, s]) => {
+                    const nps = s.nt ? ((s.np - s.nd) / s.nt) * 100 : 0;
+                    const csat = s.ct ? (s.cs / s.ct) * 100 : 0;
+                    const expect = s.et ? (s.es / s.et) * 100 : 0;
+
+                    let histNps = null, histCsat = null, histExpect = null;
+                    if (filteredHistoricalData.length > 0 && s.h_t > 0) {
+                        histNps = s.h_nt ? ((s.h_np - s.h_nd) / s.h_nt) * 100 : 0;
+                        histCsat = s.h_ct ? (s.h_cs / s.h_ct) * 100 : 0;
+                        histExpect = s.h_et ? (s.h_es / s.h_et) * 100 : 0;
+                    }
+
+                    return {
+                        name: n, total: s.t,
+                        nps, csat, expect,
+                        histNps, histCsat, histExpect
+                    };
+                }).sort((a, b) => {
+                    let vA = a[analysisSort.column], vB = b[analysisSort.column];
+                    if (typeof vA === 'string') return analysisSort.direction === 'asc' ? vA.localeCompare(vB) : vB.localeCompare(vA);
+                    return analysisSort.direction === 'asc' ? (vA > vB ? 1 : -1) : (vA < vB ? 1 : -1);
+                });
+            };
+
+            const getDeltaBadge = (curr, hist) => {
+                if (hist === null || hist === undefined) return '';
+                const diff = curr - hist;
+                if (diff > 0.1) return `<span class="text-[9px] font-black text-green-700 bg-green-100 px-1.5 py-0.5 rounded shadow-sm">↑ ${diff.toFixed(1)}</span>`;
+                if (diff < -0.1) return `<span class="text-[9px] font-black text-red-700 bg-red-100 px-1.5 py-0.5 rounded shadow-sm">↓ ${Math.abs(diff).toFixed(1)}</span>`;
+                return `<span class="text-[9px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shadow-sm">=</span>`;
+            };
+
+            const fill = (id, data, isCoachTable = false, crossFilterId = null) => {
+                const b = document.getElementById(id); b.innerHTML = "";
+                data.forEach(i => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors group";
+                    
+                    if(crossFilterId && !isCoachTable) {
+                        tr.classList.add('cross-filter-row');
+                        tr.onclick = () => {
+                            const sel = document.getElementById(crossFilterId);
+                            if(sel) {
+                                sel.value = i.name;
+                                applyFilters();
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        };
+                        tr.title = "Haz clic para filtrar el dashboard por " + i.name;
+                    }
+                    
+                    let nameCell = i.name;
+                    if (isCoachTable) {
+                        nameCell = `<button onclick="openCoachDetails('${i.name}')" class="text-left font-bold text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-800 underline-offset-2 transition-all flex items-center gap-2">
+                            ${i.name} 
+                            <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>`;
+                    } else {
+                        nameCell = `<span class="font-bold text-slate-900">${i.name}</span>`;
+                        if(crossFilterId) nameCell += ` <span class="text-[10px] text-blue-500 opacity-0 group-hover:opacity-100 ml-2 border border-blue-200 bg-blue-50 px-1.5 py-0.5 rounded shadow-sm transition-opacity">Filtrar</span>`;
+                    }
+
+                    const npsDelta = getDeltaBadge(i.nps, i.histNps);
+                    const csatDelta = getDeltaBadge(i.csat, i.histCsat);
+                    const expectDelta = getDeltaBadge(i.expect, i.histExpect);
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4">${nameCell}</td>
+                        <td class="px-6 py-4">${i.total}</td>
+                        <td class="px-6 py-4 font-bold ${i.nps < 0 ? 'text-red-500' : (i.nps>50?'text-green-600':'text-yellow-600')}">
+                            <div class="flex items-center gap-2"><span>${i.nps.toFixed(1)}%</span> ${npsDelta}</div>
+                        </td>
+                        <td class="px-6 py-4 font-bold ${i.csat > 0 ? 'text-blue-600':'text-slate-600'}">
+                            <div class="flex items-center gap-2"><span>${i.csat.toFixed(1)}%</span> ${csatDelta}</div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-700">
+                            <div class="flex items-center gap-2"><span>${i.expect.toFixed(1)}%</span> ${expectDelta}</div>
+                        </td>
+                    `;
+                    b.appendChild(tr);
+                });
+            };
+
+            renderHeaders('coach-analysis-header', 'Coach');
+            renderHeaders('nivel-analysis-header', 'Nivel');
+            renderHeaders('horario-analysis-header', 'Horario');
+            
+            fill('coach-analysis-body', gen(cIdx), true, null);
+            fill('nivel-analysis-body', gen(nIdx), false, 'nivel-filter'); 
+            fill('horario-analysis-body', gen(hIdx), false, 'horario-filter'); 
+            
+            updateAlertsTableCSAT(cIdx, hIdx, nIdx, csatIdx);
+            updateAlertsTableNPS(cIdx, hIdx, nIdx, npsIdx);
+            updateAlertsTableExpect(cIdx, hIdx, nIdx, expIdx);
+        }
+
+        // --- DRAWER LOGIC (Replaces full screen toggle) ---
+        function openCoachDetails(coachName) {
+            const coachColIdx = columnIndices[columnMappings['coach-filter']];
+            if (coachColIdx === undefined) return;
+            const coachCol = columnHeaders[coachColIdx];
+
+            currentCoachData = filteredData.filter(r => r[coachCol] === coachName);
+            if (!currentCoachData.length) return;
+
+            document.getElementById('detail-coach-name').textContent = coachName;
+            document.getElementById('inner-tab-csat').click();
+
+            generateSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-nivel-body');
+            generateSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-horario-body');
+            generateNpsSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-nps-nivel-body');
+            generateNpsSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-nps-horario-body');
+            generateExpectSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-expect-nivel-body');
+            generateExpectSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-expect-horario-body');
+
+            // Slide in Drawer
+            const drawer = document.getElementById('coach-drawer');
+            const backdrop = document.getElementById('drawer-backdrop');
+            backdrop.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // prevent background scrolling
+            
+            setTimeout(() => {
+                drawer.classList.remove('translate-x-full');
+            }, 10);
+        }
+
+        function closeCoachDetails() {
+            const drawer = document.getElementById('coach-drawer');
+            const backdrop = document.getElementById('drawer-backdrop');
+            
+            drawer.classList.add('translate-x-full');
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // --- SUB TABLES ---
+        function generateSubTable(data, colNormName, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = "";
+            const colIdx = columnIndices[colNormName];
+            const csatIdx = columnIndices[requiredMetricColumns.csat_coach_score];
+            if (colIdx === undefined || csatIdx === undefined) return;
+
+            const colName = columnHeaders[colIdx];
+            const csatColName = columnHeaders[csatIdx];
+            const commentCol = document.getElementById('comments-column-filter').value;
+
+            const groups = {};
+            data.forEach(r => {
+                const key = r[colName] || "Sin Definir";
+                if (!groups[key]) groups[key] = { total: 0, csatCount: 0, details: [] };
+                groups[key].total++;
+                const s = parseFloat(r[csatColName]);
+                if (!isNaN(s) && s >= 1 && s <= 8) groups[key].csatCount++;
+                
+                groups[key].details.push({
+                    score: isNaN(s) ? null : s,
+                    comment: commentCol && r[commentCol] ? r[commentCol] : "(Sin comentario escrito)"
+                });
+            });
+
+            const rows = Object.entries(groups).map(([k, v]) => ({
+                key: k, total: v.total, csat: v.total ? (v.csatCount / v.total) * 100 : 0,
+                details: v.details.sort((a, b) => {
+                    if (a.score === null) return 1; if (b.score === null) return -1;
+                    return a.score - b.score; 
+                })
+            })).sort((a, b) => b.total - a.total);
+
+            rows.forEach((r, index) => {
+                const detailId = `${tbodyId}-detail-${index}`;
+                const iconId = `${tbodyId}-icon-${index}`;
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
+                tr.onclick = () => {
+                    const detailRow = document.getElementById(detailId);
+                    const icon = document.getElementById(iconId);
+                    detailRow.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                };
+
+                tr.innerHTML = `
+                    <td class="px-4 py-4 border-l-4 ${r.csat > 5 ? 'border-red-400' : 'border-emerald-400'} font-bold">${r.key}</td>
+                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
+                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </td>
+                    <td class="px-4 py-4 text-right font-bold ${r.csat > 0 ? 'text-blue-600' : 'text-slate-400'}">${r.csat.toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+
+                const detailTr = document.createElement('tr');
+                detailTr.id = detailId;
+                detailTr.className = "hidden bg-slate-100 shadow-inner";
+                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
+                
+                if (!commentCol) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ Selecciona la 'Columna de Comentarios' en los filtros para ver el texto.</div>`;
+
+                r.details.forEach(d => {
+                    let badgeColor = "bg-slate-200 text-slate-700";
+                    if (d.score !== null) {
+                        if (d.score <= 8) badgeColor = "bg-red-100 text-red-800";
+                        else badgeColor = "bg-green-100 text-green-800";
+                    }
+                    detailsHTML += `
+                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                            <span class="px-2 py-1 rounded text-xs font-black shrink-0 ${badgeColor}">CSAT: ${d.score !== null ? d.score : "N/A"}</span>
+                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
+                        </div>
+                    `;
+                });
+                detailsHTML += `</div></td>`;
+                detailTr.innerHTML = detailsHTML;
+                tbody.appendChild(detailTr);
+            });
+        }
+
+        function generateNpsSubTable(data, colNormName, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = "";
+            const colIdx = columnIndices[colNormName];
+            const npsIdx = columnIndices[requiredMetricColumns.nps_score];
+            if (colIdx === undefined || npsIdx === undefined) return;
+
+            const colName = columnHeaders[colIdx];
+            const npsColName = columnHeaders[npsIdx];
+            const npsCommentIdx = columnIndices[requiredMetricColumns.nps_comment];
+            const npsCommentColName = npsCommentIdx !== undefined ? columnHeaders[npsCommentIdx] : null;
+
+            const groups = {};
+            data.forEach(r => {
+                const key = r[colName] || "Sin Definir";
+                if (!groups[key]) groups[key] = { total: 0, npsTotal: 0, promoters: 0, detractors: 0, details: [] };
+                groups[key].total++;
+                
+                const s = parseFloat(r[npsColName]);
+                if (!isNaN(s)) {
+                    groups[key].npsTotal++;
+                    if (s >= 9) groups[key].promoters++;
+                    else if (s <= 6) groups[key].detractors++;
+                }
+                
+                groups[key].details.push({
+                    score: isNaN(s) ? null : s,
+                    comment: npsCommentColName && r[npsCommentColName] ? r[npsCommentColName] : "(Sin comentario escrito para NPS)"
+                });
+            });
+
+            const rows = Object.entries(groups).map(([k, v]) => ({
+                key: k, total: v.total, nps: v.npsTotal ? ((v.promoters - v.detractors) / v.npsTotal) * 100 : 0,
+                details: v.details.sort((a, b) => {
+                    if (a.score === null) return 1; if (b.score === null) return -1;
+                    return a.score - b.score; 
+                })
+            })).sort((a, b) => b.total - a.total);
+
+            rows.forEach((r, index) => {
+                const detailId = `${tbodyId}-detail-${index}`;
+                const iconId = `${tbodyId}-icon-${index}`;
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
+                tr.onclick = () => {
+                    document.getElementById(detailId).classList.toggle('hidden');
+                    document.getElementById(iconId).classList.toggle('rotate-180');
+                };
+
+                tr.innerHTML = `
+                    <td class="px-4 py-4 border-l-4 ${r.nps < 0 ? 'border-red-400' : (r.nps > 50 ? 'border-green-400' : 'border-yellow-400')} font-bold">${r.key}</td>
+                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
+                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </td>
+                    <td class="px-4 py-4 text-right font-bold ${r.nps < 0 ? 'text-red-600' : (r.nps > 50 ? 'text-green-600' : 'text-yellow-600')}">${r.nps.toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+
+                const detailTr = document.createElement('tr');
+                detailTr.id = detailId;
+                detailTr.className = "hidden bg-slate-100 shadow-inner";
+                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
+                
+                if (!npsCommentColName) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ No se encontró la columna 'NPS COMMENT' en el archivo.</div>`;
+
+                r.details.forEach(d => {
+                    let badgeColor = "bg-slate-200 text-slate-700";
+                    if (d.score !== null) {
+                        if (d.score >= 9) badgeColor = "bg-green-100 text-green-800";
+                        else if (d.score >= 7) badgeColor = "bg-yellow-100 text-yellow-800";
+                        else badgeColor = "bg-red-100 text-red-800";
+                    }
+                    detailsHTML += `
+                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                            <span class="px-2 py-1 rounded text-xs font-black shrink-0 ${badgeColor}">NPS: ${d.score !== null ? d.score : "N/A"}</span>
+                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
+                        </div>
+                    `;
+                });
+                detailsHTML += `</div></td>`;
+                detailTr.innerHTML = detailsHTML;
+                tbody.appendChild(detailTr);
+            });
+        }
+
+        function generateExpectSubTable(data, colNormName, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = "";
+            const colIdx = columnIndices[colNormName];
+            const expIdx = columnIndices[requiredMetricColumns.expectativas];
+            if (colIdx === undefined || expIdx === undefined) return;
+
+            const colName = columnHeaders[colIdx];
+            const expColName = columnHeaders[expIdx];
+            const expCommentIdx = columnIndices[requiredMetricColumns.expectativas_comment];
+            const expCommentColName = expCommentIdx !== undefined ? columnHeaders[expCommentIdx] : null;
+
+            const groups = {};
+            data.forEach(r => {
+                const key = r[colName] || "Sin Definir";
+                if (!groups[key]) groups[key] = { total: 0, topCount: 0, details: [] };
+                
+                const expRaw = r[expColName];
+                if (expRaw) {
+                    groups[key].total++;
+                    const nExp = normalizeString(expRaw);
+                    let score = null, label = "N/A";
+                    
+                    if (nExp.includes('muy por debajo')) { score = 1; label = "Muy por debajo"; }
+                    else if (nExp.includes('por debajo')) { score = 2; label = "Por debajo"; }
+                    else if (nExp.includes('cumplio') || nExp.includes('normal')) { score = 3; label = "Cumplió"; }
+                    else if (nExp.includes('supero')) { score = 4; label = "Superó"; groups[key].topCount++; }
+                    else if (nExp.includes('muy por encima')) { score = 5; label = "Muy por encima"; groups[key].topCount++; }
+
+                    groups[key].details.push({ score, label, comment: expCommentColName && r[expCommentColName] ? r[expCommentColName] : "(Sin comentario escrito sobre expectativas)" });
+                }
+            });
+
+            const rows = Object.entries(groups).map(([k, v]) => ({
+                key: k, total: v.total, percent: v.total ? (v.topCount / v.total) * 100 : 0,
+                details: v.details.sort((a, b) => {
+                    if (a.score === null) return 1; if (b.score === null) return -1;
+                    return a.score - b.score; 
+                })
+            })).sort((a, b) => b.total - a.total);
+
+            rows.forEach((r, index) => {
+                const detailId = `${tbodyId}-detail-${index}`;
+                const iconId = `${tbodyId}-icon-${index}`;
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
+                tr.onclick = () => {
+                    document.getElementById(detailId).classList.toggle('hidden');
+                    document.getElementById(iconId).classList.toggle('rotate-180');
+                };
+
+                tr.innerHTML = `
+                    <td class="px-4 py-4 border-l-4 ${r.percent < 50 ? 'border-red-400' : 'border-green-400'} font-bold">${r.key}</td>
+                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
+                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </td>
+                    <td class="px-4 py-4 text-right font-bold ${r.percent < 50 ? 'text-red-600' : 'text-green-600'}">${r.percent.toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+
+                const detailTr = document.createElement('tr');
+                detailTr.id = detailId;
+                detailTr.className = "hidden bg-slate-100 shadow-inner";
+                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
+                
+                if (!expCommentColName) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ No se encontró la columna de expectativas.</div>`;
+
+                r.details.forEach(d => {
+                    let badgeColor = "bg-slate-200 text-slate-700";
+                    if (d.score === 1 || d.score === 2) badgeColor = "bg-red-100 text-red-800";
+                    else if (d.score === 3) badgeColor = "bg-yellow-100 text-yellow-800";
+                    else if (d.score === 4 || d.score === 5) badgeColor = "bg-green-100 text-green-800";
+                    
+                    detailsHTML += `
+                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                            <span class="px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ${badgeColor}">${d.label}</span>
+                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
+                        </div>
+                    `;
+                });
+                detailsHTML += `</div></td>`;
+                detailTr.innerHTML = detailsHTML;
+                tbody.appendChild(detailTr);
+            });
+        }
+
+        // --- ALERTS ---
+        function updateAlertsTableCSAT(cIdx, hIdx, nIdx, csatIdx) {
+            if (cIdx === undefined || hIdx === undefined || nIdx === undefined || csatIdx === undefined) return;
+            const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
+            const grps = {};
+            filteredData.forEach(r => {
+                const c = r[cCol], h = r[hCol], n = r[nCol] || "Sin Nivel";
+                if (!c || !h) return;
+                const key = `${c}||${h}||${n}`;
+                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, alerts: 0 };
+                const s = grps[key];
+                s.total++;
+                const score = parseFloat(r[columnHeaders[csatIdx]]);
+                if (!isNaN(score) && score >= 1 && score <= 8) s.alerts++;
+            });
+
+            const results = Object.values(grps).filter(item => item.alerts > 0).sort((a, b) => b.alerts - a.alerts);
+            const body = document.getElementById('alertas-csat-body');
+            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin alertas CSAT.</td></tr>";
+            
+            results.forEach(i => {
+                const ratio = (i.alerts / i.total) * 100;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-red-50 transition-colors cursor-pointer";
+                tr.onclick = () => openAlertDetails(i.coach, i.horario, i.nivel, 'csat');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.alerts}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-black">${ratio.toFixed(1)}%</span></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function updateAlertsTableNPS(cIdx, hIdx, nIdx, npsIdx) {
+            if (cIdx === undefined || hIdx === undefined || nIdx === undefined || npsIdx === undefined) return;
+            const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
+            const grps = {};
+            filteredData.forEach(r => {
+                const c = r[cCol], h = r[hCol], n = r[nCol] || "Sin Nivel";
+                if (!c || !h) return;
+                const key = `${c}||${h}||${n}`;
+                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, promoters: 0, detractors: 0 };
+                const s = grps[key];
+                const score = parseFloat(r[columnHeaders[npsIdx]]);
+                if (!isNaN(score)) {
+                    s.total++;
+                    if (score >= 9) s.promoters++;
+                    else if (score <= 6) s.detractors++;
+                }
+            });
+
+            const results = Object.values(grps).map(item => {
+                item.nps = item.total > 0 ? ((item.promoters - item.detractors) / item.total) * 100 : 0;
+                return item;
+            }).filter(item => item.total > 0 && item.nps < 80).sort((a, b) => a.nps - b.nps);
+
+            const body = document.getElementById('alertas-nps-body');
+            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin alertas NPS (Todos sobre 80%).</td></tr>";
+            
+            results.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-red-50 transition-colors cursor-pointer";
+                tr.onclick = () => openAlertDetails(i.coach, i.horario, i.nivel, 'nps');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.detractors}</td><td class="px-6 py-4 font-black text-red-600">${i.nps.toFixed(1)}%</td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function updateAlertsTableExpect(cIdx, hIdx, nIdx, expIdx) {
+            if (cIdx === undefined || hIdx === undefined || nIdx === undefined || expIdx === undefined) return;
+            const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
+            const grps = {};
+            filteredData.forEach(r => {
+                const c = r[cCol], h = r[hCol], n = r[nCol] || "Sin Nivel";
+                if (!c || !h) return;
+                const key = `${c}||${h}||${n}`;
+                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, alerts: 0 };
+                const s = grps[key];
+                const expRaw = r[columnHeaders[expIdx]];
+                if (expRaw) {
+                    s.total++;
+                    if (normalizeString(expRaw).includes('por debajo')) s.alerts++; 
+                }
+            });
+
+            const results = Object.values(grps).filter(item => item.alerts > 0).sort((a, b) => b.alerts - a.alerts);
+            const body = document.getElementById('alertas-expect-body');
+            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin alertas de Expectativas.</td></tr>";
+            
+            results.forEach(i => {
+                const ratio = (i.alerts / i.total) * 100;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-red-50 transition-colors cursor-pointer";
+                tr.onclick = () => openAlertDetails(i.coach, i.horario, i.nivel, 'expect');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.alerts}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-black">${ratio.toFixed(1)}%</span></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // --- MODAL ALERTAS ---
+        function openAlertDetails(coach, horario, nivel, type) {
+            const modal = document.getElementById('alert-modal');
+            const content = document.getElementById('alert-modal-content-wrapper');
+            const body = document.getElementById('alert-modal-body');
+            
+            let typeLabel = type === 'csat' ? 'CSAT (1-8)' : (type === 'nps' ? 'NPS < 80%' : 'Expectativas Bajas');
+            document.getElementById('alert-modal-subtitle').textContent = `Coach: ${coach} | Horario: ${horario} | Nivel: ${nivel} | Filtro: ${typeLabel}`;
+            
+            body.innerHTML = '';
+            let commentColName = null;
+            if (type === 'csat') commentColName = document.getElementById('comments-column-filter').value;
+            else if (type === 'nps' && columnIndices[requiredMetricColumns.nps_comment] !== undefined) commentColName = columnHeaders[columnIndices[requiredMetricColumns.nps_comment]];
+            else if (type === 'expect' && columnIndices[requiredMetricColumns.expectativas_comment] !== undefined) commentColName = columnHeaders[columnIndices[requiredMetricColumns.expectativas_comment]];
+
+            if (!commentColName) {
+                body.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">⚠️ No se encontró la columna de comentarios para este indicador.</div>`;
+            } else {
+                const coachCol = columnHeaders[columnIndices[columnMappings['coach-filter']]];
+                const horarioCol = columnHeaders[columnIndices[columnMappings['horario-filter']]];
+                const nivelCol = columnHeaders[columnIndices[requiredMetricColumns.nivel]];
+                
+                let metricCol = null;
+                if (type === 'csat') metricCol = columnHeaders[columnIndices[requiredMetricColumns.csat_coach_score]];
+                else if (type === 'nps') metricCol = columnHeaders[columnIndices[requiredMetricColumns.nps_score]];
+                else if (type === 'expect') metricCol = columnHeaders[columnIndices[requiredMetricColumns.expectativas]];
+
+                const alerts = filteredData.filter(r => {
+                    if (r[coachCol] !== coach || r[horarioCol] !== horario || (r[nivelCol] || "Sin Nivel") !== nivel) return false;
+                    if (type === 'csat') {
+                        const s = parseFloat(r[metricCol]); return !isNaN(s) && s >= 1 && s <= 8;
+                    } else if (type === 'nps') {
+                        return !isNaN(parseFloat(r[metricCol])); 
+                    } else if (type === 'expect') {
+                        return r[metricCol] && normalizeString(r[metricCol]).includes('por debajo');
+                    }
+                    return false;
+                });
+
+                if (alerts.length === 0) {
+                    body.innerHTML = `<p class="text-center text-slate-500 italic p-4">No se encontraron comentarios.</p>`;
+                } else {
+                    alerts.forEach(r => {
+                        const comment = r[commentColName] || "(Sin comentario escrito)";
+                        let displayBadge = "", badgeColor = "bg-red-100 text-red-700"; 
+                        
+                        if (type === 'csat') {
+                            displayBadge = `NOTA: ${r[metricCol]}`;
+                        } else if (type === 'nps') {
+                            const score = parseFloat(r[metricCol]);
+                            displayBadge = `NOTA NPS: ${score}`;
+                            if (score >= 9) badgeColor = "bg-green-100 text-green-700";
+                            else if (score >= 7) badgeColor = "bg-yellow-100 text-yellow-700";
+                        } else {
+                            displayBadge = r[metricCol];
+                        }
+                        
+                        const div = document.createElement('div');
+                        div.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-3";
+                        div.innerHTML = `<div class="flex items-center gap-2 mb-2"><span class="${badgeColor} px-2 py-1 rounded text-xs font-black uppercase">${displayBadge}</span></div><p class="text-slate-700 text-sm leading-relaxed">"${comment}"</p>`;
+                        body.appendChild(div);
+                    });
+                }
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById('alert-modal');
+            const content = document.getElementById('alert-modal-content-wrapper');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // --- PDF GENERATION ---
+        function generateCoachPDF() {
+            if (!currentCoachData || currentCoachData.length === 0) return;
+            const coachName = document.getElementById('detail-coach-name').textContent;
+            
+            const npsCol = columnHeaders[columnIndices[requiredMetricColumns.nps_score]];
+            const csatCol = columnHeaders[columnIndices[requiredMetricColumns.csat_coach_score]];
+            const commentCol = document.getElementById('comments-column-filter').value;
+            
+            let p = 0, d = 0, nTotal = 0, csatTotal = 0, csatCount = 0;
+            let positives = [], negatives = [];
+
+            currentCoachData.forEach(r => { 
+                const npsS = parseFloat(r[npsCol]); 
+                if (!isNaN(npsS)) { nTotal++; if (npsS >= 9) p++; else if (npsS <= 6) d++; } 
+                const csatS = parseFloat(r[csatCol]);
+                if (!isNaN(csatS)) { csatTotal++; if (csatS >= 1 && csatS <= 8) csatCount++; }
+
+                if (commentCol && r[commentCol] && r[commentCol].length > 5) {
+                    if (!isNaN(npsS)) {
+                        if (npsS >= 9) positives.push({ text: r[commentCol], score: npsS, type: 'NPS' });
+                        else if (npsS <= 6) negatives.push({ text: r[commentCol], score: npsS, type: 'NPS' });
+                    } else if (!isNaN(csatS)) {
+                        if (csatS >= 9) positives.push({ text: r[commentCol], score: csatS, type: 'CSAT' });
+                        else if (csatS <= 8) negatives.push({ text: r[commentCol], score: csatS, type: 'CSAT' });
+                    }
+                }
+            });
+
+            const finalNps = nTotal ? ((p - d) / nTotal) * 100 : 0;
+            const finalCsat = csatTotal ? (csatCount / csatTotal) * 100 : 0;
+
+            document.getElementById('pdf-coach-name').textContent = coachName;
+            document.getElementById('pdf-total-surveys').textContent = currentCoachData.length;
+            document.getElementById('pdf-nps').textContent = finalNps.toFixed(1) + "%";
+            document.getElementById('pdf-csat').textContent = finalCsat.toFixed(1) + "%";
+
+            document.getElementById('pdf-nps').className = `text-5xl font-black ${finalNps < 0 ? 'text-red-500' : (finalNps > 50 ? 'text-green-600' : 'text-yellow-500')}`;
+            document.getElementById('pdf-csat').className = `text-5xl font-black ${finalCsat > 0 ? 'text-blue-600' : 'text-slate-400'}`;
+
+            const posContainer = document.getElementById('pdf-positive-comments'); posContainer.innerHTML = '';
+            positives.slice(0, 3).forEach(c => { posContainer.innerHTML += `<div class="bg-green-50 p-3 rounded border border-green-100"><span class="text-[10px] font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded uppercase">Nota ${c.type}: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
+            if(positives.length === 0) posContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No hay comentarios positivos registrados.</p>';
+
+            const negContainer = document.getElementById('pdf-negative-comments'); negContainer.innerHTML = '';
+            negatives.slice(0, 3).forEach(c => { negContainer.innerHTML += `<div class="bg-red-50 p-3 rounded border border-red-100"><span class="text-[10px] font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded uppercase">Nota ${c.type}: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
+            if(negatives.length === 0) negContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No hay áreas de oportunidad registradas.</p>';
+
+            const element = document.getElementById('pdf-report');
+            const opt = { margin: 0, filename: `Ficha_${coachName.replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+
+            const btn = document.getElementById('btn-download-pdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Generando...";
+            
+            html2pdf().set(opt).from(element).save().then(() => { btn.innerHTML = originalText; });
+        }
+
+        function downloadFilteredData() {
+            if (!filteredData.length) return;
+            const ws = XLSX.utils.json_to_sheet(filteredData, { header: columnHeaders });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+            const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            saveAs(new Blob([buf], { type: 'application/octet-stream' }), "reporte_filtrado.xlsx");
+        }
+    </script>
+</body>
+
+</html>
