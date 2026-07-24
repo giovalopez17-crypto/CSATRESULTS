@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⭐ NPS/CSAT | Dashboard Satisfacción</title>
+    <title>⭐ CSAT & Evaluación Estrellas | Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SheetJS (xlsx.full.min.js) -->
@@ -33,7 +33,6 @@
             padding-right: 2.5rem;
         }
 
-        /* Elements shown after loading */
         #main-dashboard {
             display: none;
         }
@@ -65,8 +64,7 @@
         .sort-header:hover {
             background-color: #f1f5f9;
         }
-        
-        /* Efecto visual para cross-filtering */
+
         .cross-filter-row {
             cursor: pointer;
             transition: all 0.2s ease;
@@ -79,7 +77,6 @@
             position: relative;
         }
 
-        /* Drawer Custom Scrollbar */
         #coach-drawer::-webkit-scrollbar { width: 8px; }
         #coach-drawer::-webkit-scrollbar-track { background: #f1f5f9; }
         #coach-drawer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -90,18 +87,18 @@
 <body class="p-4 md:p-8 lg:p-10 relative">
     <div class="max-w-[1400px] mx-auto">
         <header class="mb-10 text-center">
-            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">⭐ NPS/CSAT | Dashboard Satisfacción</h1>
-            <p class="text-slate-500 mt-2 text-lg">Analítica avanzada de experiencia del cliente</p>
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">⭐ CSAT & Evaluación Estrellas</h1>
+            <p class="text-slate-500 mt-2 text-lg">Analítica avanzada de experiencia del cliente y sesiones 1 a 1 de retroalimentación</p>
         </header>
 
-        <!-- Zona de Carga (Modificada para 2 archivos) -->
+        <!-- Zona de Carga -->
         <div id="upload-section" class="max-w-4xl mx-auto space-y-8">
             <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
                 <h2 class="font-bold text-blue-800 text-lg mb-2 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Instrucciones de Carga
                 </h2>
-                <p class="text-sm text-blue-600">Sube el reporte del <strong>mes actual</strong> para habilitar el dashboard. Opcionalmente, sube el reporte del <strong>mes anterior</strong> (con la misma estructura) para ver las tendencias (Deltas) automáticas en tus KPIs.</p>
+                <p class="text-sm text-blue-600">Sube el reporte del <strong>mes actual</strong> para habilitar el dashboard. Opcionalmente, sube el reporte del <strong>mes anterior</strong> para ver tendencias automáticas.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -128,8 +125,6 @@
 
             <div class="text-center pt-4">
                 <button id="btn-start" onclick="initDashboard()" class="px-10 py-4 bg-blue-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 opacity-50 cursor-not-allowed transform transition-transform" disabled>Generar Dashboard</button>
-                <div id="loading-msg" class="hidden mt-4 text-blue-600 font-bold animate-pulse">Procesando estructura de datos...</div>
-                <div id="error-msg" class="hidden mt-4 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm"></div>
             </div>
         </div>
 
@@ -159,9 +154,8 @@
                 </div>
             </div>
 
-            <!-- ENRICHED KPI CARDS (Reemplaza a los Gauges) -->
+            <!-- KPI CARDS -->
             <div class="mb-10 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
-                
                 <!-- KPI: Encuestas -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
                     <div>
@@ -173,18 +167,20 @@
                     <p class="text-xs text-slate-400 mt-4 font-medium">Encuestas respondidas según filtros actuales.</p>
                 </div>
 
-                <!-- KPI: NPS -->
+                <!-- KPI: Promedio Estrellas (ej. 4.6★) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between group">
                     <div>
                         <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
-                            NPS Global <span id="delta-nps" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                            Calificación Promedio <span id="delta-nps" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
                         </h4>
-                        <p id="kpi-nps" class="text-4xl font-black text-slate-800">0%</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <p id="kpi-nps" class="text-4xl font-black text-slate-800">0.0★</p>
+                        </div>
                     </div>
                     <div class="mt-4">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>0</span><span>100</span></div>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1"><span>1★</span><span>5★</span></div>
                         <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                            <div id="bar-nps" class="h-full rounded-full transition-all duration-1000 w-0 bg-slate-300"></div>
+                            <div id="bar-nps" class="h-full rounded-full transition-all duration-1000 w-0 bg-yellow-400"></div>
                         </div>
                     </div>
                 </div>
@@ -221,11 +217,11 @@
                     </div>
                 </div>
 
-                <!-- KPI: Expectativas -->
+                <!-- KPI: % Satisfacción 4-5 Estrellas -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
                     <div>
                         <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex justify-between items-center">
-                            Superó Expect. <span id="delta-expect" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
+                            Satisfacción (4-5★) <span id="delta-expect" class="hidden text-xs font-bold rounded px-1.5 py-0.5"></span>
                         </h4>
                         <p id="kpi-expect" class="text-4xl font-black text-slate-800">0%</p>
                     </div>
@@ -236,7 +232,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- Pestañas de Análisis -->
@@ -263,7 +258,7 @@
                     <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
                         <div class="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
                             <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo (Cross-filtering): Haz clic en cualquier fila para filtrar automáticamente todo el dashboard por ese Nivel.</span>
+                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo: Haz clic en cualquier fila para filtrar por ese Nivel.</span>
                         </div>
                         <table class="min-w-full divide-y divide-slate-200">
                             <thead class="bg-slate-50"><tr id="nivel-analysis-header"></tr></thead>
@@ -274,9 +269,9 @@
 
                 <div id="content-horario" class="tab-content mt-6">
                     <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
-                         <div class="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
+                        <div class="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
                             <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo (Cross-filtering): Haz clic en cualquier fila para filtrar automáticamente todo el dashboard por ese Horario.</span>
+                            <span class="text-blue-800 text-sm font-semibold">Filtro Interactivo: Haz clic en cualquier fila para filtrar por ese Horario.</span>
                         </div>
                         <table class="min-w-full divide-y divide-slate-200">
                             <thead class="bg-slate-50"><tr id="horario-analysis-header"></tr></thead>
@@ -289,17 +284,14 @@
                     <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
                         <div class="p-6 bg-red-50 border-b border-red-100">
                             <h3 class="text-lg font-bold text-red-800">Centro de Detección de Alertas y Áreas de Mejora</h3>
-                            <p class="text-red-600 text-sm">Este reporte agrupa las notas bajas, detractores y expectativas no cumplidas por Coach, Horario y Nivel. Haz clic en una fila para explorar los comentarios específicos de esa sesión.</p>
+                            <p class="text-red-600 text-sm">Agrupa las notas bajas, evaluaciones de 1 a 3 estrellas por Coach, Horario y Nivel.</p>
                         </div>
                         
-                        <!-- Inner Tabs for Alertas -->
                         <div class="border-b border-slate-200 bg-white px-6 flex gap-8">
                             <button id="alert-tab-csat" class="py-4 text-sm font-bold text-red-600 border-b-4 border-red-600 uppercase tracking-wider transition-colors">Alertas CSAT (1-8)</button>
-                            <button id="alert-tab-nps" class="py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Alertas NPS (< 80%)</button>
-                            <button id="alert-tab-expect" class="py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Alertas Expectativas</button>
+                            <button id="alert-tab-nps" class="py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Alertas Estrellas (1-3★)</button>
                         </div>
 
-                        <!-- Tabla Alertas CSAT -->
                         <div id="alert-csat-section" class="block overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-200">
                                 <thead class="bg-slate-50">
@@ -316,7 +308,6 @@
                             </table>
                         </div>
 
-                        <!-- Tabla Alertas NPS -->
                         <div id="alert-nps-section" class="hidden overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-200">
                                 <thead class="bg-slate-50">
@@ -325,28 +316,11 @@
                                         <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Horario</th>
                                         <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nivel</th>
                                         <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Encuestas</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Encuestas (1 al 6)</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">NPS Actual</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Notas Bajas (1-3★)</th>
+                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Promedio Estrellas</th>
                                     </tr>
                                 </thead>
                                 <tbody id="alertas-nps-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
-                            </table>
-                        </div>
-
-                        <!-- Tabla Alertas Expectativas -->
-                        <div id="alert-expect-section" class="hidden overflow-x-auto">
-                            <table class="min-w-full divide-y divide-slate-200">
-                                <thead class="bg-slate-50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Coach</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Horario</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nivel</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Encuestas</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Expectativa Baja</th>
-                                        <th class="px-6 py-4 text-left text-[10px] font-black text-red-500 uppercase tracking-widest">Incidencia</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="alertas-expect-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700"></tbody>
                             </table>
                         </div>
                     </div>
@@ -355,11 +329,9 @@
         </div>
     </div>
 
-    <!-- DRAWER: COACH DETAIL VIEW (Slide-over) -->
+    <!-- DRAWER: COACH DETAIL VIEW -->
     <div id="drawer-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden transition-opacity" onclick="closeCoachDetails()"></div>
     <div id="coach-drawer" class="fixed top-0 right-0 h-full w-full md:w-[85vw] lg:w-[75vw] xl:w-[1100px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto flex flex-col">
-        
-        <!-- Header Drawer -->
         <div class="sticky top-0 z-10 bg-slate-900 px-8 py-6 text-white shadow-md flex justify-between items-center">
             <div>
                 <div class="flex items-center gap-3">
@@ -368,7 +340,7 @@
                     </div>
                     <h2 class="text-3xl font-extrabold tracking-tight" id="detail-coach-name">Nombre del Coach</h2>
                 </div>
-                <p class="text-slate-400 mt-2 ml-11">Informe Detallado de Rendimiento Operativo y Comentarios</p>
+                <p class="text-slate-400 mt-2 ml-11">Informe Detallado de Retroalimentación 1 a 1 (Haz clic en las filas para leer comentarios)</p>
             </div>
             <div class="flex items-center gap-4">
                 <button id="btn-download-pdf" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-colors">
@@ -382,33 +354,33 @@
         </div>
         
         <div class="p-8 flex-1 bg-slate-50/50">
-            <!-- Inner Tabs for Coach Detail -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
                 <div class="border-b border-slate-200 bg-slate-50/80 px-6 flex gap-8 overflow-x-auto">
-                    <button id="inner-tab-csat" class="whitespace-nowrap py-4 text-sm font-bold text-blue-600 border-b-4 border-blue-600 uppercase tracking-wider transition-colors">Módulo CSAT</button>
-                    <button id="inner-tab-nps" class="whitespace-nowrap py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Módulo NPS</button>
-                    <button id="inner-tab-expect" class="whitespace-nowrap py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Módulo Expectativas</button>
+                    <button id="inner-tab-csat" class="whitespace-nowrap py-4 text-sm font-bold text-blue-600 border-b-4 border-blue-600 uppercase tracking-wider transition-colors">Módulo CSAT Académico</button>
+                    <button id="inner-tab-expect" class="whitespace-nowrap py-4 text-sm font-bold text-slate-500 border-b-4 border-transparent hover:text-slate-800 uppercase tracking-wider transition-colors">Módulo Estrellas Promedio</button>
                 </div>
 
                 <!-- CSAT SECTION -->
-                <div id="detail-csat-section" class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div id="detail-csat-section" class="p-6 grid grid-cols-1 gap-8">
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">CSAT por Nivel</h3>
+                        <h3 class="text-sm font-bold text-slate-800 mb-2 border-l-4 border-blue-500 pl-3 uppercase tracking-widest">CSAT por Nivel</h3>
+                        <p class="text-xs text-slate-400 mb-4 pl-4">Haz clic en cualquier fila para expandir y leer los comentarios detallados de los alumnos.</p>
                         <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                             <table class="min-w-full text-sm bg-white">
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT</th></tr>
+                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT %</th></tr>
                                 </thead>
                                 <tbody id="detail-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
                             </table>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-emerald-500 pl-3 uppercase tracking-widest">CSAT por Horario</h3>
+                        <h3 class="text-sm font-bold text-slate-800 mb-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-widest">CSAT por Horario</h3>
+                        <p class="text-xs text-slate-400 mb-4 pl-4">Haz clic en cualquier fila para expandir y leer los comentarios detallados de los alumnos.</p>
                         <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                             <table class="min-w-full text-sm bg-white">
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT</th></tr>
+                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">CSAT %</th></tr>
                                 </thead>
                                 <tbody id="detail-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
                             </table>
@@ -416,51 +388,27 @@
                     </div>
                 </div>
 
-                <!-- NPS SECTION -->
-                <div id="detail-nps-section" class="p-6 grid-cols-1 lg:grid-cols-2 gap-8 hidden">
+                <!-- EXPECTATIVAS / ESTRELLAS SECTION -->
+                <div id="detail-expect-section" class="p-6 grid grid-cols-1 gap-8 hidden">
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-orange-500 pl-3 uppercase tracking-widest">NPS por Nivel</h3>
+                        <h3 class="text-sm font-bold text-slate-800 mb-2 border-l-4 border-yellow-500 pl-3 uppercase tracking-widest">Estrellas por Nivel</h3>
+                        <p class="text-xs text-slate-400 mb-4 pl-4">Haz clic en cualquier fila para desplegar las razones escritas por cada alumno.</p>
                         <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                             <table class="min-w-full text-sm bg-white">
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">NPS</th></tr>
-                                </thead>
-                                <tbody id="detail-nps-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-purple-500 pl-3 uppercase tracking-widest">NPS por Horario</h3>
-                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                            <table class="min-w-full text-sm bg-white">
-                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">NPS</th></tr>
-                                </thead>
-                                <tbody id="detail-nps-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- EXPECTATIVAS SECTION -->
-                <div id="detail-expect-section" class="p-6 grid-cols-1 lg:grid-cols-2 gap-8 hidden">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-pink-500 pl-3 uppercase tracking-widest">Expectativas por Nivel</h3>
-                        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                            <table class="min-w-full text-sm bg-white">
-                                <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">% Positivo</th></tr>
+                                    <tr><th class="px-4 py-3 text-left">Nivel</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">Promedio Estrellas</th></tr>
                                 </thead>
                                 <tbody id="detail-expect-nivel-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
                             </table>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800 mb-4 border-l-4 border-rose-500 pl-3 uppercase tracking-widest">Expectativas por Horario</h3>
+                        <h3 class="text-sm font-bold text-slate-800 mb-2 border-l-4 border-amber-500 pl-3 uppercase tracking-widest">Estrellas por Horario</h3>
+                        <p class="text-xs text-slate-400 mb-4 pl-4">Haz clic en cualquier fila para desplegar las razones escritas por cada alumno.</p>
                         <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                             <table class="min-w-full text-sm bg-white">
                                 <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">% Positivo</th></tr>
+                                    <tr><th class="px-4 py-3 text-left">Horario</th><th class="px-4 py-3 text-right">Encuestas</th><th class="px-4 py-3 text-right">Promedio Estrellas</th></tr>
                                 </thead>
                                 <tbody id="detail-expect-horario-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
                             </table>
@@ -471,7 +419,7 @@
         </div>
     </div>
     
-    <!-- ALERT DETAILS MODAL (z-index adjusted) -->
+    <!-- ALERT DETAILS MODAL -->
     <div id="alert-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden flex items-center justify-center z-[60] transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col m-4 transform transition-all scale-95 opacity-0" id="alert-modal-content-wrapper">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-red-50 to-white rounded-t-2xl">
@@ -493,7 +441,7 @@
         </div>
     </div>
 
-    <!-- INVISIBLE PDF TEMPLATE FOR COACH ONE-PAGER -->
+    <!-- INVISIBLE PDF TEMPLATE FOR COACH -->
     <div id="pdf-container-wrapper" class="absolute top-[-9999px] left-[-9999px] overflow-hidden">
         <div id="pdf-report" class="bg-white w-[794px] min-h-[1123px] p-10 font-sans text-slate-800">
             <div class="border-b-4 border-indigo-600 pb-4 mb-8 flex justify-between items-end">
@@ -509,8 +457,8 @@
 
             <div class="grid grid-cols-2 gap-6 mb-10">
                 <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-2">NPS Global</h3>
-                    <p class="text-5xl font-black text-slate-800" id="pdf-nps">0%</p>
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-2">Promedio Estrellas</h3>
+                    <p class="text-5xl font-black text-amber-500" id="pdf-nps">0.0★</p>
                 </div>
                 <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
                     <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-2">CSAT Académico</h3>
@@ -520,7 +468,6 @@
 
             <div class="mb-8">
                 <h3 class="text-xl font-black text-green-700 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
                     Top Comentarios Positivos (Fortalezas)
                 </h3>
                 <div id="pdf-positive-comments" class="space-y-3"></div>
@@ -528,7 +475,6 @@
 
             <div>
                 <h3 class="text-xl font-black text-red-700 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"/></svg>
                     Áreas de Oportunidad (Notas Bajas)
                 </h3>
                 <div id="pdf-negative-comments" class="space-y-3"></div>
@@ -568,7 +514,7 @@
             'csat_bist_score': 'csat bist score',
             'csat_instalaciones_score': 'csat instalaciones score',
             'nps_comment': 'nps comment',
-            'expectativas_comment': 'que podemos hacer para superar tus expectativas'
+            'expectativas_comment': 'cuentanos la razon de tu nota'
         };
 
         function normalizeString(str) {
@@ -576,7 +522,20 @@
             return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
         }
 
-        // --- NEW: Handle 2 Files ---
+        function renderStarGraphic(avg) {
+            if (avg <= 0) return '<span class="text-slate-300">Sin nota</span>';
+            const filledStars = Math.round(avg);
+            let starsHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= filledStars) {
+                    starsHTML += '<span class="text-amber-400">★</span>';
+                } else {
+                    starsHTML += '<span class="text-slate-300">★</span>';
+                }
+            }
+            return `<span class="font-bold text-slate-800 mr-1.5">${avg.toFixed(1)}</span><span class="tracking-widest">${starsHTML}</span>`;
+        }
+
         function handleFile(event, type) {
             const file = event.target.files[0];
             if (!file) return;
@@ -608,26 +567,32 @@
 
                     if (type === 'current') {
                         columnIndices = {};
+                        
                         Object.entries(columnMappings).forEach(([id, norm]) => {
                             if (norm) {
-                                const idx = normHeaders.indexOf(norm);
+                                let idx = normHeaders.indexOf(norm);
+                                if (idx === -1) idx = normHeaders.findIndex(h => h.includes(norm));
                                 if (idx !== -1) columnIndices[norm] = idx;
                             }
                         });
-                        Object.values(requiredMetricColumns).forEach(name => {
-                            const idx = normHeaders.indexOf(name);
+
+                        Object.entries(requiredMetricColumns).forEach(([key, name]) => {
+                            let idx = normHeaders.indexOf(name);
+                            if (idx === -1) {
+                                idx = normHeaders.findIndex(h => h.includes(name) || (name.length > 5 && h.includes(name.substring(0, 15))));
+                            }
                             if (idx !== -1) columnIndices[name] = idx;
                         });
+
                         columnHeaders = headers;
                         currentRawData = parsedRows;
                         
-                        // Enable start button
                         const btn = document.getElementById('btn-start');
                         btn.disabled = false;
                         btn.classList.remove('opacity-50', 'cursor-not-allowed');
                         btn.classList.add('hover:bg-blue-700', 'hover:-translate-y-1');
                     } else {
-                        historicalRawData = parsedRows; // Just store it for delta calculations
+                        historicalRawData = parsedRows;
                     }
                 } catch (err) { alert("Error leyendo archivo: " + err.message); }
             };
@@ -642,9 +607,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('pdf-button') || document.getElementById('btn-download-pdf').addEventListener('click', generateCoachPDF);
+            const pdfBtn = document.getElementById('btn-download-pdf');
+            if (pdfBtn) pdfBtn.addEventListener('click', generateCoachPDF);
             
-            // Main dashboard tabs
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active', 'text-slate-800', 'border-blue-500'));
@@ -654,10 +619,8 @@
                 });
             });
 
-            // Inner Tabs for Coach Drawer
             const innerTabs = [
                 { btn: document.getElementById('inner-tab-csat'), sec: document.getElementById('detail-csat-section') },
-                { btn: document.getElementById('inner-tab-nps'), sec: document.getElementById('detail-nps-section') },
                 { btn: document.getElementById('inner-tab-expect'), sec: document.getElementById('detail-expect-section') }
             ];
 
@@ -677,11 +640,9 @@
                 });
             });
 
-            // Inner Tabs for Alertas
             const alertTabs = [
                 { btn: document.getElementById('alert-tab-csat'), sec: document.getElementById('alert-csat-section') },
-                { btn: document.getElementById('alert-tab-nps'), sec: document.getElementById('alert-nps-section') },
-                { btn: document.getElementById('alert-tab-expect'), sec: document.getElementById('alert-expect-section') }
+                { btn: document.getElementById('alert-tab-nps'), sec: document.getElementById('alert-nps-section') }
             ];
 
             alertTabs.forEach(tab => {
@@ -700,7 +661,6 @@
                 });
             });
 
-            // Filters Listeners
             Object.keys(columnMappings).forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -724,8 +684,10 @@
                         opt.value = h; opt.textContent = h;
                         sel.appendChild(opt);
                     });
-                    let likely = columnHeaders.find(h => normalizeString(h) === 'coach comment');
-                    if (!likely) likely = columnHeaders.find(h => normalizeString(h).includes('comentario') || normalizeString(h).includes('feedback'));
+                    let likely = columnHeaders.find(h => {
+                        const n = normalizeString(h);
+                        return n.includes('cuentanos') || n.includes('razon') || n.includes('coach comment');
+                    });
                     if (likely) sel.value = likely;
                     return;
                 }
@@ -738,7 +700,7 @@
                 const colIdx = columnIndices[norm];
                 if (colIdx === undefined) return;
                 const col = columnHeaders[colIdx];
-                const vals = [...new Set(currentRawData.map(r => r[col]))].filter(v => v).sort();
+                const vals = [...new Set(currentRawData.map(r => r[col]))].filter(v => v !== undefined && v !== null && v !== '').sort();
                 sel.innerHTML = '<option value="">All</option>';
                 vals.forEach(v => { const opt = document.createElement('option'); opt.value = v; opt.textContent = v; sel.appendChild(opt); });
             });
@@ -761,7 +723,7 @@
                 relevantData = currentRawData.filter(r => r[paisCol] === paisSel.value);
             }
 
-            const vals = [...new Set(relevantData.map(r => r[sucCol]))].filter(v => v).sort();
+            const vals = [...new Set(relevantData.map(r => r[sucCol]))].filter(v => v !== undefined && v !== null && v !== '').sort();
             const currentVal = sucSel.value;
             sucSel.innerHTML = '<option value="">All</option>';
             let exists = false;
@@ -810,9 +772,8 @@
             applyFilters();
         }
 
-        // --- NEW KPI CALCULATION AND RENDERING ---
         function calculateKPISet(dataset) {
-            let res = { total: dataset.length, nps: 0, csatCoach: 0, csatEsac: 0, csatInst: 0, expect: 0 };
+            let res = { total: dataset.length, avgStars: 0, csatCoach: 0, csatEsac: 0, csatInst: 0, expect: 0 };
             if (!res.total) return res;
 
             const idx = {
@@ -823,45 +784,45 @@
                 exp: columnIndices[requiredMetricColumns.expectativas]
             };
 
-            let n_p=0, n_d=0, n_t=0;
+            let starSum = 0, starCount = 0;
             let cc_c=0, cc_t=0;
             let ce_c=0, ce_t=0;
             let ci_c=0, ci_t=0;
             let ex_c=0, ex_t=0;
 
             dataset.forEach(r => {
-                // NPS
-                if(idx.nps !== undefined) {
-                    const v = parseFloat(r[columnHeaders[idx.nps]]);
-                    if(!isNaN(v)) { n_t++; if(v>=9) n_p++; else if(v<=6) n_d++; }
-                }
-                // CSAT Coach
                 if(idx.c_coach !== undefined) {
                     const v = parseFloat(r[columnHeaders[idx.c_coach]]);
                     if(!isNaN(v)) { cc_t++; if(v>=1 && v<=8) cc_c++; }
                 }
-                // CSAT Esac
                 if(idx.c_esac !== undefined) {
                     const v = parseFloat(r[columnHeaders[idx.c_esac]]);
                     if(!isNaN(v)) { ce_t++; if(v>=1 && v<=8) ce_c++; }
                 }
-                // CSAT Inst
                 if(idx.c_inst !== undefined) {
                     const v = parseFloat(r[columnHeaders[idx.c_inst]]);
                     if(!isNaN(v)) { ci_t++; if(v>=1 && v<=8) ci_c++; }
                 }
-                // Expect
-                if(idx.exp !== undefined) {
-                    const v = r[columnHeaders[idx.exp]];
-                    if(v) { 
-                        ex_t++; 
-                        const n = normalizeString(v);
-                        if(n.includes('muy por encima') || n.includes('supero')) ex_c++; 
-                    }
+                
+                let starVal = null;
+                if (idx.exp !== undefined) {
+                    const vNum = parseFloat(r[columnHeaders[idx.exp]]);
+                    if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
+                }
+                if (starVal === null && idx.nps !== undefined) {
+                    const vNum = parseFloat(r[columnHeaders[idx.nps]]);
+                    if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
+                }
+
+                if (starVal !== null) {
+                    starSum += starVal;
+                    starCount++;
+                    ex_t++;
+                    if (starVal >= 4) ex_c++;
                 }
             });
 
-            res.nps = n_t ? ((n_p - n_d) / n_t) * 100 : 0;
+            res.avgStars = starCount ? (starSum / starCount) : 0;
             res.csatCoach = cc_t ? (cc_c / cc_t) * 100 : 0;
             res.csatEsac = ce_t ? (ce_c / ce_t) * 100 : 0;
             res.csatInst = ci_t ? (ci_c / ci_t) * 100 : 0;
@@ -869,47 +830,48 @@
             return res;
         }
 
-        function renderKPICard(idPrefix, currentVal, histVal, isNps = false) {
+        function renderKPICard(idPrefix, currentVal, histVal, isStarAvg = false) {
             const elVal = document.getElementById(`kpi-${idPrefix}`);
             const elBar = document.getElementById(`bar-${idPrefix}`);
             const elDelta = document.getElementById(`delta-${idPrefix}`);
             
             if(!elVal) return;
 
-            elVal.textContent = currentVal.toFixed(1) + (idPrefix === 'encuestas' ? '' : '%');
+            if (isStarAvg) {
+                elVal.textContent = currentVal.toFixed(1) + "★";
+            } else {
+                elVal.textContent = currentVal.toFixed(1) + (idPrefix === 'encuestas' ? '' : '%');
+            }
             
-            // Bar logic (Skip for encuestas)
             if (elBar) {
-                let barW = isNps ? (currentVal + 100) / 2 : currentVal; 
-                barW = Math.max(0, Math.min(100, barW)); // clamp
-                elBar.style.width = barW + '%';
+                let barW = isStarAvg ? (currentVal / 5) * 100 : currentVal;
+                barW = Math.max(0, Math.min(100, barW));
                 
-                // Semantic colors
-                elBar.className = "h-full rounded-full transition-all duration-1000 w-0"; // reset
-                if (isNps) {
-                    if(currentVal >= 50) elBar.classList.add('bg-green-500');
-                    else if (currentVal >= 0) elBar.classList.add('bg-yellow-400');
+                elBar.className = "h-full rounded-full transition-all duration-1000 w-0";
+                if (isStarAvg) {
+                    if(currentVal >= 4.5) elBar.classList.add('bg-amber-400');
+                    else if (currentVal >= 4.0) elBar.classList.add('bg-yellow-400');
                     else elBar.classList.add('bg-red-500');
                 } else {
                     if(currentVal >= 80) elBar.classList.add('bg-blue-600');
                     else elBar.classList.add('bg-blue-400');
                 }
-                elBar.style.width = barW + '%'; // re-apply
+                elBar.style.width = barW + '%';
             }
 
-            // Delta logic
             if (histVal !== null && elDelta) {
                 const diff = currentVal - histVal;
                 elDelta.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-slate-100', 'text-slate-500');
                 
-                if (diff > 0.1) {
-                    elDelta.textContent = `↑ +${diff.toFixed(1)}${idPrefix === 'encuestas'?'':'%'}`;
+                const unit = isStarAvg ? '★' : (idPrefix === 'encuestas' ? '' : '%');
+                if (diff > 0.05) {
+                    elDelta.textContent = `↑ +${diff.toFixed(1)}${unit}`;
                     elDelta.classList.add('bg-green-100', 'text-green-700');
-                } else if (diff < -0.1) {
-                    elDelta.textContent = `↓ ${diff.toFixed(1)}${idPrefix === 'encuestas'?'':'%'}`;
+                } else if (diff < -0.05) {
+                    elDelta.textContent = `↓ ${diff.toFixed(1)}${unit}`;
                     elDelta.classList.add('bg-red-100', 'text-red-700');
                 } else {
-                    elDelta.textContent = `= 0.0%`;
+                    elDelta.textContent = `= 0.0`;
                     elDelta.classList.add('bg-slate-100', 'text-slate-500');
                 }
             } else if (elDelta) {
@@ -922,7 +884,7 @@
             const histKpi = histData.length > 0 ? calculateKPISet(histData) : null;
 
             renderKPICard('encuestas', currKpi.total, histKpi ? histKpi.total : null);
-            renderKPICard('nps', currKpi.nps, histKpi ? histKpi.nps : null, true);
+            renderKPICard('nps', currKpi.avgStars, histKpi ? histKpi.avgStars : null, true);
             renderKPICard('csat', currKpi.csatCoach, histKpi ? histKpi.csatCoach : null);
             renderKPICard('servicio', currKpi.csatEsac, histKpi ? histKpi.csatEsac : null);
             renderKPICard('expect', currKpi.expect, histKpi ? histKpi.expect : null);
@@ -937,8 +899,8 @@
         function renderHeaders(id, name) {
             const header = document.getElementById(id);
             const cols = [
-                { k: 'name', l: name }, { k: 'total', l: 'Encuestas' }, { k: 'nps', l: 'NPS' }, 
-                { k: 'csat', l: 'Académico' }, { k: 'expect', l: 'Expectativa' }
+                { k: 'name', l: name }, { k: 'total', l: 'Encuestas' }, { k: 'avgStars', l: 'Prom. Estrellas' }, 
+                { k: 'csat', l: 'CSAT Acad.' }, { k: 'expect', l: 'Sat. (4-5★)' }
             ];
             header.innerHTML = "";
             cols.forEach(c => {
@@ -952,10 +914,9 @@
             });
         }
 
-        // --- CROSS FILTERING IN TABLES ---
         function updateAnalysisTables() {
             if (!filteredData.length) {
-                ['coach-analysis-body','nivel-analysis-body','horario-analysis-body','alertas-csat-body','alertas-nps-body','alertas-expect-body'].forEach(id => {
+                ['coach-analysis-body','nivel-analysis-body','horario-analysis-body','alertas-csat-body','alertas-nps-body'].forEach(id => {
                     const el = document.getElementById(id); if(el) el.innerHTML = '';
                 });
                 return;
@@ -972,58 +933,42 @@
                 const colKey = columnHeaders[idx];
                 const grps = {};
                 
-                // Datos del mes actual
                 filteredData.forEach(r => {
                     const g = r[colKey]; if (!g) return;
-                    if (!grps[g]) grps[g] = { t: 0, np: 0, nd: 0, nt: 0, cs: 0, ct: 0, es: 0, et: 0, h_t: 0, h_np: 0, h_nd: 0, h_nt: 0, h_cs: 0, h_ct: 0, h_es: 0, h_et: 0 };
+                    if (!grps[g]) grps[g] = { t: 0, starSum: 0, starCount: 0, cs: 0, ct: 0, ex_c: 0, ex_t: 0 };
                     const s = grps[g]; s.t++;
-                    const ns = parseFloat(r[columnHeaders[npsIdx]]); if (!isNaN(ns)) { s.nt++; if (ns >= 9) s.np++; else if (ns <= 6) s.nd++; }
+                    
                     const cs = parseFloat(r[columnHeaders[csatIdx]]); if (!isNaN(cs)) { s.ct++; if (cs >= 1 && cs <= 8) s.cs++; }
-                    const ev = r[columnHeaders[expIdx]]; if (ev) { s.et++; if (normalizeString(ev).includes('muy por encima') || normalizeString(ev).includes('supero')) s.es++; }
-                });
-
-                // Datos históricos para calcular deltas
-                if (filteredHistoricalData.length > 0) {
-                    filteredHistoricalData.forEach(r => {
-                        const g = r[colKey]; if (!g) return;
-                        if (!grps[g]) return; // Solo calculamos delta para los que existen en el mes actual
-                        const s = grps[g]; s.h_t++;
-                        const ns = parseFloat(r[columnHeaders[npsIdx]]); if (!isNaN(ns)) { s.h_nt++; if (ns >= 9) s.h_np++; else if (ns <= 6) s.h_nd++; }
-                        const cs = parseFloat(r[columnHeaders[csatIdx]]); if (!isNaN(cs)) { s.h_ct++; if (cs >= 1 && cs <= 8) s.h_cs++; }
-                        const ev = r[columnHeaders[expIdx]]; if (ev) { s.h_et++; if (normalizeString(ev).includes('muy por encima') || normalizeString(ev).includes('supero')) s.h_es++; }
-                    });
-                }
-
-                return Object.entries(grps).map(([n, s]) => {
-                    const nps = s.nt ? ((s.np - s.nd) / s.nt) * 100 : 0;
-                    const csat = s.ct ? (s.cs / s.ct) * 100 : 0;
-                    const expect = s.et ? (s.es / s.et) * 100 : 0;
-
-                    let histNps = null, histCsat = null, histExpect = null;
-                    if (filteredHistoricalData.length > 0 && s.h_t > 0) {
-                        histNps = s.h_nt ? ((s.h_np - s.h_nd) / s.h_nt) * 100 : 0;
-                        histCsat = s.h_ct ? (s.h_cs / s.h_ct) * 100 : 0;
-                        histExpect = s.h_et ? (s.h_es / s.h_et) * 100 : 0;
+                    
+                    let starVal = null;
+                    if (expIdx !== undefined) {
+                        const vNum = parseFloat(r[columnHeaders[expIdx]]);
+                        if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
+                    }
+                    if (starVal === null && npsIdx !== undefined) {
+                        const vNum = parseFloat(r[columnHeaders[npsIdx]]);
+                        if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
                     }
 
-                    return {
-                        name: n, total: s.t,
-                        nps, csat, expect,
-                        histNps, histCsat, histExpect
-                    };
+                    if (starVal !== null) {
+                        s.starSum += starVal;
+                        s.starCount++;
+                        s.ex_t++;
+                        if (starVal >= 4) s.ex_c++;
+                    }
+                });
+
+                return Object.entries(grps).map(([n, s]) => {
+                    const avgStars = s.starCount ? (s.starSum / s.starCount) : 0;
+                    const csat = s.ct ? (s.cs / s.ct) * 100 : 0;
+                    const expect = s.ex_t ? (s.ex_c / s.ex_t) * 100 : 0;
+
+                    return { name: n, total: s.t, avgStars, csat, expect };
                 }).sort((a, b) => {
                     let vA = a[analysisSort.column], vB = b[analysisSort.column];
-                    if (typeof vA === 'string') return analysisSort.direction === 'asc' ? vA.localeCompare(vB) : vB.localeCompare(vA);
+                    if (typeof vA === 'string') return analysisSort.direction === 'asc' ? vA.localeCompare(vB) : vB.localeCompare(a.name);
                     return analysisSort.direction === 'asc' ? (vA > vB ? 1 : -1) : (vA < vB ? 1 : -1);
                 });
-            };
-
-            const getDeltaBadge = (curr, hist) => {
-                if (hist === null || hist === undefined) return '';
-                const diff = curr - hist;
-                if (diff > 0.1) return `<span class="text-[9px] font-black text-green-700 bg-green-100 px-1.5 py-0.5 rounded shadow-sm">↑ ${diff.toFixed(1)}</span>`;
-                if (diff < -0.1) return `<span class="text-[9px] font-black text-red-700 bg-red-100 px-1.5 py-0.5 rounded shadow-sm">↓ ${Math.abs(diff).toFixed(1)}</span>`;
-                return `<span class="text-[9px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shadow-sm">=</span>`;
             };
 
             const fill = (id, data, isCoachTable = false, crossFilterId = null) => {
@@ -1042,36 +987,21 @@
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
                         };
-                        tr.title = "Haz clic para filtrar el dashboard por " + i.name;
                     }
                     
                     let nameCell = i.name;
                     if (isCoachTable) {
-                        nameCell = `<button onclick="openCoachDetails('${i.name}')" class="text-left font-bold text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-800 underline-offset-2 transition-all flex items-center gap-2">
-                            ${i.name} 
-                            <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </button>`;
+                        nameCell = `<button onclick="openCoachDetails('${i.name}')" class="text-left font-bold text-blue-600 hover:text-blue-800 underline transition-all flex items-center gap-2">${i.name}</button>`;
                     } else {
                         nameCell = `<span class="font-bold text-slate-900">${i.name}</span>`;
-                        if(crossFilterId) nameCell += ` <span class="text-[10px] text-blue-500 opacity-0 group-hover:opacity-100 ml-2 border border-blue-200 bg-blue-50 px-1.5 py-0.5 rounded shadow-sm transition-opacity">Filtrar</span>`;
                     }
-
-                    const npsDelta = getDeltaBadge(i.nps, i.histNps);
-                    const csatDelta = getDeltaBadge(i.csat, i.histCsat);
-                    const expectDelta = getDeltaBadge(i.expect, i.histExpect);
 
                     tr.innerHTML = `
                         <td class="px-6 py-4">${nameCell}</td>
                         <td class="px-6 py-4">${i.total}</td>
-                        <td class="px-6 py-4 font-bold ${i.nps < 0 ? 'text-red-500' : (i.nps>50?'text-green-600':'text-yellow-600')}">
-                            <div class="flex items-center gap-2"><span>${i.nps.toFixed(1)}%</span> ${npsDelta}</div>
-                        </td>
-                        <td class="px-6 py-4 font-bold ${i.csat > 0 ? 'text-blue-600':'text-slate-600'}">
-                            <div class="flex items-center gap-2"><span>${i.csat.toFixed(1)}%</span> ${csatDelta}</div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-700">
-                            <div class="flex items-center gap-2"><span>${i.expect.toFixed(1)}%</span> ${expectDelta}</div>
-                        </td>
+                        <td class="px-6 py-4 flex items-center">${renderStarGraphic(i.avgStars)}</td>
+                        <td class="px-6 py-4 font-bold ${i.csat > 0 ? 'text-blue-600':'text-slate-600'}">${i.csat.toFixed(1)}%</td>
+                        <td class="px-6 py-4 text-slate-700">${i.expect.toFixed(1)}%</td>
                     `;
                     b.appendChild(tr);
                 });
@@ -1086,11 +1016,9 @@
             fill('horario-analysis-body', gen(hIdx), false, 'horario-filter'); 
             
             updateAlertsTableCSAT(cIdx, hIdx, nIdx, csatIdx);
-            updateAlertsTableNPS(cIdx, hIdx, nIdx, npsIdx);
-            updateAlertsTableExpect(cIdx, hIdx, nIdx, expIdx);
+            updateAlertsTableNPS(cIdx, hIdx, nIdx, expIdx, npsIdx);
         }
 
-        // --- DRAWER LOGIC (Replaces full screen toggle) ---
         function openCoachDetails(coachName) {
             const coachColIdx = columnIndices[columnMappings['coach-filter']];
             if (coachColIdx === undefined) return;
@@ -1102,28 +1030,22 @@
             document.getElementById('detail-coach-name').textContent = coachName;
             document.getElementById('inner-tab-csat').click();
 
-            generateSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-nivel-body');
-            generateSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-horario-body');
-            generateNpsSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-nps-nivel-body');
-            generateNpsSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-nps-horario-body');
+            generateSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-nivel-body', 'csat');
+            generateSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-horario-body', 'csat');
             generateExpectSubTable(currentCoachData, requiredMetricColumns.nivel, 'detail-expect-nivel-body');
             generateExpectSubTable(currentCoachData, columnMappings['horario-filter'], 'detail-expect-horario-body');
 
-            // Slide in Drawer
             const drawer = document.getElementById('coach-drawer');
             const backdrop = document.getElementById('drawer-backdrop');
             backdrop.classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // prevent background scrolling
+            document.body.style.overflow = 'hidden';
             
-            setTimeout(() => {
-                drawer.classList.remove('translate-x-full');
-            }, 10);
+            setTimeout(() => { drawer.classList.remove('translate-x-full'); }, 10);
         }
 
         function closeCoachDetails() {
             const drawer = document.getElementById('coach-drawer');
             const backdrop = document.getElementById('drawer-backdrop');
-            
             drawer.classList.add('translate-x-full');
             setTimeout(() => {
                 backdrop.classList.add('hidden');
@@ -1131,8 +1053,18 @@
             }, 300);
         }
 
-        // --- SUB TABLES ---
-        function generateSubTable(data, colNormName, tbodyId) {
+        // --- SUB-TABLAS INTERACTIVAS PARA SESIÓN 1 A 1 ---
+        function getCommentColumnName() {
+            const selected = document.getElementById('comments-column-filter').value;
+            if (selected) return selected;
+            // Fallback a columnas comunes si no seleccionó manualmente
+            return columnHeaders.find(h => {
+                const n = normalizeString(h);
+                return n.includes('cuentanos') || n.includes('razon') || n.includes('coach comment');
+            });
+        }
+
+        function generateSubTable(data, colNormName, tbodyId, metricType) {
             const tbody = document.getElementById(tbodyId);
             tbody.innerHTML = "";
             const colIdx = columnIndices[colNormName];
@@ -1141,7 +1073,7 @@
 
             const colName = columnHeaders[colIdx];
             const csatColName = columnHeaders[csatIdx];
-            const commentCol = document.getElementById('comments-column-filter').value;
+            const commentColName = getCommentColumnName();
 
             const groups = {};
             data.forEach(r => {
@@ -1150,152 +1082,72 @@
                 groups[key].total++;
                 const s = parseFloat(r[csatColName]);
                 if (!isNaN(s) && s >= 1 && s <= 8) groups[key].csatCount++;
-                
+
+                const commentText = commentColName && r[commentColName] ? String(r[commentColName]).trim() : "";
                 groups[key].details.push({
-                    score: isNaN(s) ? null : s,
-                    comment: commentCol && r[commentCol] ? r[commentCol] : "(Sin comentario escrito)"
+                    score: isNaN(s) ? "N/A" : s,
+                    comment: commentText || "(El estudiante no escribió un comentario)"
                 });
             });
 
             const rows = Object.entries(groups).map(([k, v]) => ({
-                key: k, total: v.total, csat: v.total ? (v.csatCount / v.total) * 100 : 0,
-                details: v.details.sort((a, b) => {
-                    if (a.score === null) return 1; if (b.score === null) return -1;
-                    return a.score - b.score; 
-                })
+                key: k, total: v.total, csat: v.total ? (v.csatCount / v.total) * 100 : 0, details: v.details
             })).sort((a, b) => b.total - a.total);
 
-            rows.forEach((r, index) => {
-                const detailId = `${tbodyId}-detail-${index}`;
-                const iconId = `${tbodyId}-icon-${index}`;
-                
+            rows.forEach((r, idx) => {
+                const rowId = `${tbodyId}-row-${idx}`;
+                const accordionId = `${tbodyId}-acc-${idx}`;
+                const iconId = `${tbodyId}-icon-${idx}`;
+
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
+                tr.id = rowId;
+                tr.className = "hover:bg-blue-50 transition-colors border-b border-slate-100 cursor-pointer group";
                 tr.onclick = () => {
-                    const detailRow = document.getElementById(detailId);
+                    const acc = document.getElementById(accordionId);
                     const icon = document.getElementById(iconId);
-                    detailRow.classList.toggle('hidden');
+                    acc.classList.toggle('hidden');
                     icon.classList.toggle('rotate-180');
                 };
 
                 tr.innerHTML = `
-                    <td class="px-4 py-4 border-l-4 ${r.csat > 5 ? 'border-red-400' : 'border-emerald-400'} font-bold">${r.key}</td>
-                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
-                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <td class="px-4 py-4 font-bold text-slate-800 flex items-center gap-2">
+                        <svg id="${iconId}" class="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        ${r.key}
                     </td>
-                    <td class="px-4 py-4 text-right font-bold ${r.csat > 0 ? 'text-blue-600' : 'text-slate-400'}">${r.csat.toFixed(1)}%</td>
+                    <td class="px-4 py-4 text-right font-bold text-slate-600">${r.total}</td>
+                    <td class="px-4 py-4 text-right font-bold ${r.csat > 0 ? 'text-blue-600' : 'text-slate-400'}">
+                        ${r.csat.toFixed(1)}%
+                        <span class="text-[10px] text-blue-500 block font-normal group-hover:underline">ver comentarios</span>
+                    </td>
                 `;
                 tbody.appendChild(tr);
 
-                const detailTr = document.createElement('tr');
-                detailTr.id = detailId;
-                detailTr.className = "hidden bg-slate-100 shadow-inner";
-                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
-                
-                if (!commentCol) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ Selecciona la 'Columna de Comentarios' en los filtros para ver el texto.</div>`;
+                // Fila del Acordeón con los comentarios legibles
+                const accTr = document.createElement('tr');
+                accTr.id = accordionId;
+                accTr.className = "hidden bg-slate-100/80 shadow-inner";
+
+                let commentsHTML = `<td colspan="3" class="p-4"><div class="space-y-3 max-h-80 overflow-y-auto pr-2">`;
+                commentsHTML += `<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Comentarios de Alumnos (${r.key}):</p>`;
 
                 r.details.forEach(d => {
-                    let badgeColor = "bg-slate-200 text-slate-700";
-                    if (d.score !== null) {
-                        if (d.score <= 8) badgeColor = "bg-red-100 text-red-800";
-                        else badgeColor = "bg-green-100 text-green-800";
+                    let badgeClass = "bg-slate-200 text-slate-700";
+                    if (typeof d.score === 'number') {
+                        if (d.score >= 9) badgeClass = "bg-green-100 text-green-800 border-green-200";
+                        else badgeClass = "bg-red-100 text-red-800 border-red-200";
                     }
-                    detailsHTML += `
-                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                            <span class="px-2 py-1 rounded text-xs font-black shrink-0 ${badgeColor}">CSAT: ${d.score !== null ? d.score : "N/A"}</span>
-                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
+
+                    commentsHTML += `
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-black shrink-0 border ${badgeClass}">Nota: ${d.score}</span>
+                            <p class="text-sm text-slate-700 italic leading-relaxed">"${d.comment}"</p>
                         </div>
                     `;
                 });
-                detailsHTML += `</div></td>`;
-                detailTr.innerHTML = detailsHTML;
-                tbody.appendChild(detailTr);
-            });
-        }
 
-        function generateNpsSubTable(data, colNormName, tbodyId) {
-            const tbody = document.getElementById(tbodyId);
-            tbody.innerHTML = "";
-            const colIdx = columnIndices[colNormName];
-            const npsIdx = columnIndices[requiredMetricColumns.nps_score];
-            if (colIdx === undefined || npsIdx === undefined) return;
-
-            const colName = columnHeaders[colIdx];
-            const npsColName = columnHeaders[npsIdx];
-            const npsCommentIdx = columnIndices[requiredMetricColumns.nps_comment];
-            const npsCommentColName = npsCommentIdx !== undefined ? columnHeaders[npsCommentIdx] : null;
-
-            const groups = {};
-            data.forEach(r => {
-                const key = r[colName] || "Sin Definir";
-                if (!groups[key]) groups[key] = { total: 0, npsTotal: 0, promoters: 0, detractors: 0, details: [] };
-                groups[key].total++;
-                
-                const s = parseFloat(r[npsColName]);
-                if (!isNaN(s)) {
-                    groups[key].npsTotal++;
-                    if (s >= 9) groups[key].promoters++;
-                    else if (s <= 6) groups[key].detractors++;
-                }
-                
-                groups[key].details.push({
-                    score: isNaN(s) ? null : s,
-                    comment: npsCommentColName && r[npsCommentColName] ? r[npsCommentColName] : "(Sin comentario escrito para NPS)"
-                });
-            });
-
-            const rows = Object.entries(groups).map(([k, v]) => ({
-                key: k, total: v.total, nps: v.npsTotal ? ((v.promoters - v.detractors) / v.npsTotal) * 100 : 0,
-                details: v.details.sort((a, b) => {
-                    if (a.score === null) return 1; if (b.score === null) return -1;
-                    return a.score - b.score; 
-                })
-            })).sort((a, b) => b.total - a.total);
-
-            rows.forEach((r, index) => {
-                const detailId = `${tbodyId}-detail-${index}`;
-                const iconId = `${tbodyId}-icon-${index}`;
-                
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
-                tr.onclick = () => {
-                    document.getElementById(detailId).classList.toggle('hidden');
-                    document.getElementById(iconId).classList.toggle('rotate-180');
-                };
-
-                tr.innerHTML = `
-                    <td class="px-4 py-4 border-l-4 ${r.nps < 0 ? 'border-red-400' : (r.nps > 50 ? 'border-green-400' : 'border-yellow-400')} font-bold">${r.key}</td>
-                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
-                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </td>
-                    <td class="px-4 py-4 text-right font-bold ${r.nps < 0 ? 'text-red-600' : (r.nps > 50 ? 'text-green-600' : 'text-yellow-600')}">${r.nps.toFixed(1)}%</td>
-                `;
-                tbody.appendChild(tr);
-
-                const detailTr = document.createElement('tr');
-                detailTr.id = detailId;
-                detailTr.className = "hidden bg-slate-100 shadow-inner";
-                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
-                
-                if (!npsCommentColName) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ No se encontró la columna 'NPS COMMENT' en el archivo.</div>`;
-
-                r.details.forEach(d => {
-                    let badgeColor = "bg-slate-200 text-slate-700";
-                    if (d.score !== null) {
-                        if (d.score >= 9) badgeColor = "bg-green-100 text-green-800";
-                        else if (d.score >= 7) badgeColor = "bg-yellow-100 text-yellow-800";
-                        else badgeColor = "bg-red-100 text-red-800";
-                    }
-                    detailsHTML += `
-                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                            <span class="px-2 py-1 rounded text-xs font-black shrink-0 ${badgeColor}">NPS: ${d.score !== null ? d.score : "N/A"}</span>
-                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
-                        </div>
-                    `;
-                });
-                detailsHTML += `</div></td>`;
-                detailTr.innerHTML = detailsHTML;
-                tbody.appendChild(detailTr);
+                commentsHTML += `</div></td>`;
+                accTr.innerHTML = commentsHTML;
+                tbody.appendChild(accTr);
             });
         }
 
@@ -1308,85 +1160,83 @@
 
             const colName = columnHeaders[colIdx];
             const expColName = columnHeaders[expIdx];
-            const expCommentIdx = columnIndices[requiredMetricColumns.expectativas_comment];
-            const expCommentColName = expCommentIdx !== undefined ? columnHeaders[expCommentIdx] : null;
+            const commentColName = getCommentColumnName();
 
             const groups = {};
             data.forEach(r => {
                 const key = r[colName] || "Sin Definir";
-                if (!groups[key]) groups[key] = { total: 0, topCount: 0, details: [] };
+                if (!groups[key]) groups[key] = { total: 0, starSum: 0, starCount: 0, details: [] };
                 
-                const expRaw = r[expColName];
-                if (expRaw) {
+                const val = parseFloat(r[expColName]);
+                if (!isNaN(val) && val >= 1 && val <= 5) {
                     groups[key].total++;
-                    const nExp = normalizeString(expRaw);
-                    let score = null, label = "N/A";
-                    
-                    if (nExp.includes('muy por debajo')) { score = 1; label = "Muy por debajo"; }
-                    else if (nExp.includes('por debajo')) { score = 2; label = "Por debajo"; }
-                    else if (nExp.includes('cumplio') || nExp.includes('normal')) { score = 3; label = "Cumplió"; }
-                    else if (nExp.includes('supero')) { score = 4; label = "Superó"; groups[key].topCount++; }
-                    else if (nExp.includes('muy por encima')) { score = 5; label = "Muy por encima"; groups[key].topCount++; }
+                    groups[key].starSum += val;
+                    groups[key].starCount++;
 
-                    groups[key].details.push({ score, label, comment: expCommentColName && r[expCommentColName] ? r[expCommentColName] : "(Sin comentario escrito sobre expectativas)" });
+                    const commentText = commentColName && r[commentColName] ? String(r[commentColName]).trim() : "";
+                    groups[key].details.push({
+                        stars: val,
+                        comment: commentText || "(El estudiante no escribió un comentario)"
+                    });
                 }
             });
 
             const rows = Object.entries(groups).map(([k, v]) => ({
-                key: k, total: v.total, percent: v.total ? (v.topCount / v.total) * 100 : 0,
-                details: v.details.sort((a, b) => {
-                    if (a.score === null) return 1; if (b.score === null) return -1;
-                    return a.score - b.score; 
-                })
+                key: k, total: v.total, avgStars: v.starCount ? (v.starSum / v.starCount) : 0, details: v.details
             })).sort((a, b) => b.total - a.total);
 
-            rows.forEach((r, index) => {
-                const detailId = `${tbodyId}-detail-${index}`;
-                const iconId = `${tbodyId}-icon-${index}`;
-                
+            rows.forEach((r, idx) => {
+                const accordionId = `${tbodyId}-acc-exp-${idx}`;
+                const iconId = `${tbodyId}-icon-exp-${idx}`;
+
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 transition-colors group cursor-pointer border-b border-slate-100";
+                tr.className = "hover:bg-blue-50 transition-colors border-b border-slate-100 cursor-pointer group";
                 tr.onclick = () => {
-                    document.getElementById(detailId).classList.toggle('hidden');
-                    document.getElementById(iconId).classList.toggle('rotate-180');
+                    const acc = document.getElementById(accordionId);
+                    const icon = document.getElementById(iconId);
+                    acc.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
                 };
 
                 tr.innerHTML = `
-                    <td class="px-4 py-4 border-l-4 ${r.percent < 50 ? 'border-red-400' : 'border-green-400'} font-bold">${r.key}</td>
-                    <td class="px-4 py-4 text-right font-bold text-slate-600 flex items-center justify-end gap-1 group-hover:text-blue-600">
-                        ${r.total} <svg id="${iconId}" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <td class="px-4 py-4 font-bold text-slate-800 flex items-center gap-2">
+                        <svg id="${iconId}" class="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        ${r.key}
                     </td>
-                    <td class="px-4 py-4 text-right font-bold ${r.percent < 50 ? 'text-red-600' : 'text-green-600'}">${r.percent.toFixed(1)}%</td>
+                    <td class="px-4 py-4 text-right font-bold text-slate-600">${r.total}</td>
+                    <td class="px-4 py-4 text-right">
+                        <div class="flex items-center justify-end">${renderStarGraphic(r.avgStars)}</div>
+                        <span class="text-[10px] text-amber-600 block font-normal group-hover:underline mt-0.5">ver comentarios</span>
+                    </td>
                 `;
                 tbody.appendChild(tr);
 
-                const detailTr = document.createElement('tr');
-                detailTr.id = detailId;
-                detailTr.className = "hidden bg-slate-100 shadow-inner";
-                let detailsHTML = `<td colspan="3" class="p-0"><div class="p-4 max-h-60 overflow-y-auto space-y-2 border-l-4 border-slate-300">`;
-                
-                if (!expCommentColName) detailsHTML += `<div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">⚠️ No se encontró la columna de expectativas.</div>`;
+                // Fila del Acordeón con comentarios de Estrellas
+                const accTr = document.createElement('tr');
+                accTr.id = accordionId;
+                accTr.className = "hidden bg-slate-100/80 shadow-inner";
+
+                let commentsHTML = `<td colspan="3" class="p-4"><div class="space-y-3 max-h-80 overflow-y-auto pr-2">`;
+                commentsHTML += `<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Comentarios de Estrellas (${r.key}):</p>`;
 
                 r.details.forEach(d => {
-                    let badgeColor = "bg-slate-200 text-slate-700";
-                    if (d.score === 1 || d.score === 2) badgeColor = "bg-red-100 text-red-800";
-                    else if (d.score === 3) badgeColor = "bg-yellow-100 text-yellow-800";
-                    else if (d.score === 4 || d.score === 5) badgeColor = "bg-green-100 text-green-800";
-                    
-                    detailsHTML += `
-                        <div class="flex items-start gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                            <span class="px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ${badgeColor}">${d.label}</span>
-                            <p class="text-sm text-slate-700 italic">"${d.comment}"</p>
+                    let badgeClass = "bg-amber-100 text-amber-900 border-amber-300";
+                    if (d.stars <= 3) badgeClass = "bg-red-100 text-red-800 border-red-200";
+
+                    commentsHTML += `
+                        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3">
+                            <span class="px-2 py-1 rounded-lg text-xs font-black shrink-0 border ${badgeClass}">${d.stars}★</span>
+                            <p class="text-sm text-slate-700 italic leading-relaxed">"${d.comment}"</p>
                         </div>
                     `;
                 });
-                detailsHTML += `</div></td>`;
-                detailTr.innerHTML = detailsHTML;
-                tbody.appendChild(detailTr);
+
+                commentsHTML += `</div></td>`;
+                accTr.innerHTML = commentsHTML;
+                tbody.appendChild(accTr);
             });
         }
 
-        // --- ALERTS ---
         function updateAlertsTableCSAT(cIdx, hIdx, nIdx, csatIdx) {
             if (cIdx === undefined || hIdx === undefined || nIdx === undefined || csatIdx === undefined) return;
             const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
@@ -1418,112 +1268,82 @@
             });
         }
 
-        function updateAlertsTableNPS(cIdx, hIdx, nIdx, npsIdx) {
-            if (cIdx === undefined || hIdx === undefined || nIdx === undefined || npsIdx === undefined) return;
+        function updateAlertsTableNPS(cIdx, hIdx, nIdx, expIdx, npsIdx) {
+            if (cIdx === undefined || hIdx === undefined || nIdx === undefined) return;
             const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
             const grps = {};
             filteredData.forEach(r => {
                 const c = r[cCol], h = r[hCol], n = r[nCol] || "Sin Nivel";
                 if (!c || !h) return;
                 const key = `${c}||${h}||${n}`;
-                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, promoters: 0, detractors: 0 };
+                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, lowCount: 0, starSum: 0, starCount: 0 };
                 const s = grps[key];
-                const score = parseFloat(r[columnHeaders[npsIdx]]);
-                if (!isNaN(score)) {
+                
+                let starVal = null;
+                if (expIdx !== undefined) {
+                    const vNum = parseFloat(r[columnHeaders[expIdx]]);
+                    if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
+                }
+                if (starVal === null && npsIdx !== undefined) {
+                    const vNum = parseFloat(r[columnHeaders[npsIdx]]);
+                    if (!isNaN(vNum) && vNum >= 1 && vNum <= 5) starVal = vNum;
+                }
+
+                if (starVal !== null) {
                     s.total++;
-                    if (score >= 9) s.promoters++;
-                    else if (score <= 6) s.detractors++;
+                    s.starSum += starVal;
+                    s.starCount++;
+                    if (starVal <= 3) s.lowCount++;
                 }
             });
 
             const results = Object.values(grps).map(item => {
-                item.nps = item.total > 0 ? ((item.promoters - item.detractors) / item.total) * 100 : 0;
+                item.avgStars = item.starCount ? (item.starSum / item.starCount) : 0;
                 return item;
-            }).filter(item => item.total > 0 && item.nps < 80).sort((a, b) => a.nps - b.nps);
+            }).filter(item => item.lowCount > 0).sort((a, b) => b.lowCount - a.lowCount);
 
             const body = document.getElementById('alertas-nps-body');
-            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin alertas NPS (Todos sobre 80%).</td></tr>";
+            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin evaluaciones bajas (1-3★).</td></tr>";
             
             results.forEach(i => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-red-50 transition-colors cursor-pointer";
                 tr.onclick = () => openAlertDetails(i.coach, i.horario, i.nivel, 'nps');
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.detractors}</td><td class="px-6 py-4 font-black text-red-600">${i.nps.toFixed(1)}%</td>
+                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.lowCount}</td><td class="px-6 py-4 flex items-center">${renderStarGraphic(i.avgStars)}</td>
                 `;
                 body.appendChild(tr);
             });
         }
 
-        function updateAlertsTableExpect(cIdx, hIdx, nIdx, expIdx) {
-            if (cIdx === undefined || hIdx === undefined || nIdx === undefined || expIdx === undefined) return;
-            const cCol = columnHeaders[cIdx], hCol = columnHeaders[hIdx], nCol = columnHeaders[nIdx];
-            const grps = {};
-            filteredData.forEach(r => {
-                const c = r[cCol], h = r[hCol], n = r[nCol] || "Sin Nivel";
-                if (!c || !h) return;
-                const key = `${c}||${h}||${n}`;
-                if (!grps[key]) grps[key] = { coach: c, horario: h, nivel: n, total: 0, alerts: 0 };
-                const s = grps[key];
-                const expRaw = r[columnHeaders[expIdx]];
-                if (expRaw) {
-                    s.total++;
-                    if (normalizeString(expRaw).includes('por debajo')) s.alerts++; 
-                }
-            });
-
-            const results = Object.values(grps).filter(item => item.alerts > 0).sort((a, b) => b.alerts - a.alerts);
-            const body = document.getElementById('alertas-expect-body');
-            body.innerHTML = results.length ? "" : "<tr><td colspan='6' class='px-6 py-8 text-center text-slate-400 italic'>Sin alertas de Expectativas.</td></tr>";
-            
-            results.forEach(i => {
-                const ratio = (i.alerts / i.total) * 100;
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-red-50 transition-colors cursor-pointer";
-                tr.onclick = () => openAlertDetails(i.coach, i.horario, i.nivel, 'expect');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-900">${i.coach}</td><td class="px-6 py-4">${i.horario}</td><td class="px-6 py-4">${i.nivel}</td><td class="px-6 py-4">${i.total}</td><td class="px-6 py-4 font-black text-red-600">${i.alerts}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-black">${ratio.toFixed(1)}%</span></td>
-                `;
-                body.appendChild(tr);
-            });
-        }
-
-        // --- MODAL ALERTAS ---
         function openAlertDetails(coach, horario, nivel, type) {
             const modal = document.getElementById('alert-modal');
             const content = document.getElementById('alert-modal-content-wrapper');
             const body = document.getElementById('alert-modal-body');
             
-            let typeLabel = type === 'csat' ? 'CSAT (1-8)' : (type === 'nps' ? 'NPS < 80%' : 'Expectativas Bajas');
+            let typeLabel = type === 'csat' ? 'CSAT (1-8)' : 'Estrellas Bajas (1-3★)';
             document.getElementById('alert-modal-subtitle').textContent = `Coach: ${coach} | Horario: ${horario} | Nivel: ${nivel} | Filtro: ${typeLabel}`;
             
             body.innerHTML = '';
-            let commentColName = null;
-            if (type === 'csat') commentColName = document.getElementById('comments-column-filter').value;
-            else if (type === 'nps' && columnIndices[requiredMetricColumns.nps_comment] !== undefined) commentColName = columnHeaders[columnIndices[requiredMetricColumns.nps_comment]];
-            else if (type === 'expect' && columnIndices[requiredMetricColumns.expectativas_comment] !== undefined) commentColName = columnHeaders[columnIndices[requiredMetricColumns.expectativas_comment]];
+            let commentColName = getCommentColumnName();
 
             if (!commentColName) {
-                body.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">⚠️ No se encontró la columna de comentarios para este indicador.</div>`;
+                body.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">⚠️ Selecciona la columna de comentarios en los filtros principales.</div>`;
             } else {
                 const coachCol = columnHeaders[columnIndices[columnMappings['coach-filter']]];
                 const horarioCol = columnHeaders[columnIndices[columnMappings['horario-filter']]];
                 const nivelCol = columnHeaders[columnIndices[requiredMetricColumns.nivel]];
                 
-                let metricCol = null;
+                let metricCol = columnHeaders[columnIndices[requiredMetricColumns.expectativas]];
                 if (type === 'csat') metricCol = columnHeaders[columnIndices[requiredMetricColumns.csat_coach_score]];
-                else if (type === 'nps') metricCol = columnHeaders[columnIndices[requiredMetricColumns.nps_score]];
-                else if (type === 'expect') metricCol = columnHeaders[columnIndices[requiredMetricColumns.expectativas]];
 
                 const alerts = filteredData.filter(r => {
                     if (r[coachCol] !== coach || r[horarioCol] !== horario || (r[nivelCol] || "Sin Nivel") !== nivel) return false;
-                    if (type === 'csat') {
-                        const s = parseFloat(r[metricCol]); return !isNaN(s) && s >= 1 && s <= 8;
-                    } else if (type === 'nps') {
-                        return !isNaN(parseFloat(r[metricCol])); 
-                    } else if (type === 'expect') {
-                        return r[metricCol] && normalizeString(r[metricCol]).includes('por debajo');
-                    }
+                    const val = parseFloat(r[metricCol]);
+                    if (isNaN(val)) return false;
+
+                    if (type === 'csat') return val >= 1 && val <= 8;
+                    if (type === 'nps') return val >= 1 && val <= 3;
                     return false;
                 });
 
@@ -1532,22 +1352,12 @@
                 } else {
                     alerts.forEach(r => {
                         const comment = r[commentColName] || "(Sin comentario escrito)";
-                        let displayBadge = "", badgeColor = "bg-red-100 text-red-700"; 
-                        
-                        if (type === 'csat') {
-                            displayBadge = `NOTA: ${r[metricCol]}`;
-                        } else if (type === 'nps') {
-                            const score = parseFloat(r[metricCol]);
-                            displayBadge = `NOTA NPS: ${score}`;
-                            if (score >= 9) badgeColor = "bg-green-100 text-green-700";
-                            else if (score >= 7) badgeColor = "bg-yellow-100 text-yellow-700";
-                        } else {
-                            displayBadge = r[metricCol];
-                        }
+                        const score = r[metricCol];
+                        let badgeColor = "bg-red-100 text-red-700 border-red-200";
                         
                         const div = document.createElement('div');
                         div.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-3";
-                        div.innerHTML = `<div class="flex items-center gap-2 mb-2"><span class="${badgeColor} px-2 py-1 rounded text-xs font-black uppercase">${displayBadge}</span></div><p class="text-slate-700 text-sm leading-relaxed">"${comment}"</p>`;
+                        div.innerHTML = `<div class="flex items-center gap-2 mb-2"><span class="${badgeColor} border px-2.5 py-1 rounded-lg text-xs font-black uppercase">NOTA / ESTRELLAS: ${score}★</span></div><p class="text-slate-700 text-sm leading-relaxed">"${comment}"</p>`;
                         body.appendChild(div);
                     });
                 }
@@ -1568,52 +1378,49 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
-        // --- PDF GENERATION ---
         function generateCoachPDF() {
             if (!currentCoachData || currentCoachData.length === 0) return;
             const coachName = document.getElementById('detail-coach-name').textContent;
             
-            const npsCol = columnHeaders[columnIndices[requiredMetricColumns.nps_score]];
             const csatCol = columnHeaders[columnIndices[requiredMetricColumns.csat_coach_score]];
-            const commentCol = document.getElementById('comments-column-filter').value;
+            const expCol = columnHeaders[columnIndices[requiredMetricColumns.expectativas]];
+            const commentCol = getCommentColumnName();
             
-            let p = 0, d = 0, nTotal = 0, csatTotal = 0, csatCount = 0;
+            let starSum = 0, starCount = 0, csatTotal = 0, csatCount = 0;
             let positives = [], negatives = [];
 
             currentCoachData.forEach(r => { 
-                const npsS = parseFloat(r[npsCol]); 
-                if (!isNaN(npsS)) { nTotal++; if (npsS >= 9) p++; else if (npsS <= 6) d++; } 
+                const starS = parseFloat(r[expCol]); 
+                if (!isNaN(starS) && starS >= 1 && starS <= 5) {
+                    starSum += starS;
+                    starCount++;
+                }
+
                 const csatS = parseFloat(r[csatCol]);
                 if (!isNaN(csatS)) { csatTotal++; if (csatS >= 1 && csatS <= 8) csatCount++; }
 
-                if (commentCol && r[commentCol] && r[commentCol].length > 5) {
-                    if (!isNaN(npsS)) {
-                        if (npsS >= 9) positives.push({ text: r[commentCol], score: npsS, type: 'NPS' });
-                        else if (npsS <= 6) negatives.push({ text: r[commentCol], score: npsS, type: 'NPS' });
-                    } else if (!isNaN(csatS)) {
-                        if (csatS >= 9) positives.push({ text: r[commentCol], score: csatS, type: 'CSAT' });
-                        else if (csatS <= 8) negatives.push({ text: r[commentCol], score: csatS, type: 'CSAT' });
+                if (commentCol && r[commentCol] && String(r[commentCol]).length > 2) {
+                    if (!isNaN(starS)) {
+                        if (starS >= 4) positives.push({ text: r[commentCol], score: starS + "★" });
+                        else if (starS <= 3) negatives.push({ text: r[commentCol], score: starS + "★" });
                     }
                 }
             });
 
-            const finalNps = nTotal ? ((p - d) / nTotal) * 100 : 0;
+            const finalStars = starCount ? (starSum / starCount) : 0;
             const finalCsat = csatTotal ? (csatCount / csatTotal) * 100 : 0;
 
             document.getElementById('pdf-coach-name').textContent = coachName;
             document.getElementById('pdf-total-surveys').textContent = currentCoachData.length;
-            document.getElementById('pdf-nps').textContent = finalNps.toFixed(1) + "%";
+            document.getElementById('pdf-nps').textContent = finalStars.toFixed(1) + "★";
             document.getElementById('pdf-csat').textContent = finalCsat.toFixed(1) + "%";
 
-            document.getElementById('pdf-nps').className = `text-5xl font-black ${finalNps < 0 ? 'text-red-500' : (finalNps > 50 ? 'text-green-600' : 'text-yellow-500')}`;
-            document.getElementById('pdf-csat').className = `text-5xl font-black ${finalCsat > 0 ? 'text-blue-600' : 'text-slate-400'}`;
-
             const posContainer = document.getElementById('pdf-positive-comments'); posContainer.innerHTML = '';
-            positives.slice(0, 3).forEach(c => { posContainer.innerHTML += `<div class="bg-green-50 p-3 rounded border border-green-100"><span class="text-[10px] font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded uppercase">Nota ${c.type}: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
+            positives.slice(0, 3).forEach(c => { posContainer.innerHTML += `<div class="bg-green-50 p-3 rounded border border-green-100"><span class="text-[10px] font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded uppercase">Calificación: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
             if(positives.length === 0) posContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No hay comentarios positivos registrados.</p>';
 
             const negContainer = document.getElementById('pdf-negative-comments'); negContainer.innerHTML = '';
-            negatives.slice(0, 3).forEach(c => { negContainer.innerHTML += `<div class="bg-red-50 p-3 rounded border border-red-100"><span class="text-[10px] font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded uppercase">Nota ${c.type}: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
+            negatives.slice(0, 3).forEach(c => { negContainer.innerHTML += `<div class="bg-red-50 p-3 rounded border border-red-100"><span class="text-[10px] font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded uppercase">Calificación: ${c.score}</span><p class="text-sm text-slate-700 mt-1 italic">"${c.text}"</p></div>`; });
             if(negatives.length === 0) negContainer.innerHTML = '<p class="text-sm text-slate-400 italic">No hay áreas de oportunidad registradas.</p>';
 
             const element = document.getElementById('pdf-report');
